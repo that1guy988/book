@@ -12,6 +12,18 @@ function waveStyle(i: number) {
   const scale = 1 - (i % 3) * 0.02; // variação mínima de tamanho, quase imperceptível
   return `transform: translateY(${lift}px) scale(${scale});`;
 }
+
+// Título "As Salas" traduzido — usa artigo quando natural no idioma.
+const MAIN_TITLE: Record<string, string> = {
+  pt: 'As Salas',
+  en: 'The Rooms',
+  es: 'Las Salas',
+  fr: 'Les Salles',
+  ja: '部屋',
+  zh: '房间',
+  uk: 'Кімнати',
+  ru: 'Комнаты',
+};
 ---
 
 <!doctype html>
@@ -23,7 +35,7 @@ function waveStyle(i: number) {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Source+Serif+4:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Source+Serif+4:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@500;600&family=Montserrat:wght@400;500&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -37,6 +49,50 @@ function waveStyle(i: number) {
         <div class="dust-mote dust-1"></div>
         <div class="dust-mote dust-2"></div>
         <div class="dust-mote dust-3"></div>
+      </div>
+
+      <div class="hero" aria-hidden="false">
+        <div class="hero-art" aria-hidden="true">
+          <!-- "O Mosaico do Corredor": traço ligne claire, silhueta de costas
+               diante de uma porta, com cores de cada sala escapando ao redor. -->
+          <svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">
+            <!-- rajada de névoa (azul-acinzentado) -->
+            <path d="M40 70 Q75 55 105 68 Q130 78 160 62" fill="none" stroke="#8fa9c4" stroke-width="2.5" stroke-linecap="round" opacity="0.55" />
+            <path d="M30 88 Q60 76 95 86" fill="none" stroke="#8fa9c4" stroke-width="2" stroke-linecap="round" opacity="0.4" />
+
+            <!-- flocos de neve (branco) -->
+            <circle cx="185" cy="45" r="2.4" fill="#f4f7fa" opacity="0.8" />
+            <circle cx="200" cy="60" r="1.6" fill="#f4f7fa" opacity="0.6" />
+            <circle cx="170" cy="58" r="1.4" fill="#f4f7fa" opacity="0.55" />
+
+            <!-- vapor + folha de matchá (verde) -->
+            <path d="M300 95 Q292 78 302 62 Q294 78 306 90" fill="none" stroke="#7fae7a" stroke-width="2.2" stroke-linecap="round" opacity="0.6" />
+            <ellipse cx="308" cy="96" rx="6" ry="3.2" fill="#7fae7a" opacity="0.5" transform="rotate(30 308 96)" />
+
+            <!-- redemoinho aquarela (rosa/vermelho da artista) -->
+            <path d="M330 130 Q346 118 344 100 Q356 116 342 128 Q356 132 344 144" fill="none" stroke="#c1607a" stroke-width="2.4" stroke-linecap="round" opacity="0.6" />
+
+            <!-- página voando (linha clara) -->
+            <rect x="60" y="115" width="20" height="26" rx="1.5" fill="none" stroke="#cfc6b8" stroke-width="1.4" opacity="0.55" transform="rotate(-18 70 128)" />
+
+            <!-- ursinho roxo, quase escondido (easter egg) -->
+            <circle cx="248" cy="150" r="3" fill="#9a7ab8" opacity="0.5" />
+
+            <!-- porta central, traço fino uniforme -->
+            <rect x="168" y="150" width="64" height="98" rx="3" fill="none" stroke="#cfc6b8" stroke-width="2" opacity="0.85" />
+            <line x1="200" y1="150" x2="200" y2="248" stroke="#cfc6b8" stroke-width="1" opacity="0.35" />
+            <circle cx="222" cy="200" r="2" fill="#cfc6b8" opacity="0.7" />
+
+            <!-- silhueta de costas, diante da porta -->
+            <path
+              d="M188 248 L188 205 Q188 185 200 185 Q212 185 212 205 L212 248 Z"
+              fill="#0b0a0d"
+            />
+            <circle cx="200" cy="176" r="9" fill="#0b0a0d" />
+          </svg>
+        </div>
+
+        <h1 class="hero-title">{MAIN_TITLE.pt}</h1>
       </div>
 
       <p class="corridor-hint">
@@ -68,8 +124,8 @@ function waveStyle(i: number) {
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: flex-end;
-        padding: 2rem 1rem 4rem;
+        justify-content: center;
+        padding: 3rem 1rem;
       }
 
       .hallway {
@@ -146,6 +202,37 @@ function waveStyle(i: number) {
       @keyframes float-dust {
         0%, 100% { transform: translate(0, 0); opacity: 0.15; }
         50% { transform: translate(1vw, -3vh); opacity: 0.5; }
+      }
+
+      .hero {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: clamp(1rem, 3vh, 2rem);
+      }
+
+      .hero-art {
+        width: min(90vw, 420px);
+        filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.5));
+      }
+      .hero-art svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .hero-title {
+        font-family: 'Playfair Display', 'Cinzel', serif;
+        font-weight: 600;
+        font-size: clamp(2.2rem, 6vw, 3.6rem);
+        letter-spacing: 0.04em;
+        color: #f1e9d8;
+        margin: 0;
+        text-align: center;
+        text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6);
       }
 
       .corridor-hint {
