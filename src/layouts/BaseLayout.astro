@@ -1,0 +1,67 @@
+---
+import '../styles/global.css';
+import { languages, type Lang } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+import AmbientBackground from '../components/AmbientBackground.astro';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  ambientColor?: string;
+  ambientEffect?: 'fog' | 'steam' | 'dust' | 'embers' | 'snow' | 'none';
+}
+
+const { lang, title, ambientColor = '#7a2e2e', ambientEffect = 'none' } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Source+Serif+4:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="min-h-screen bg-stone-950 text-stone-100 font-serif">
+    <AmbientBackground color={ambientColor} effect={ambientEffect} />
+    <header class="relative z-10 border-b border-stone-800">
+      <nav class="max-w-3xl mx-auto flex items-center justify-between px-6 py-4">
+        <a href={`/${lang}/`} class="text-lg tracking-wide">{t('nav.home')}</a>
+        <div class="flex items-center gap-4">
+          <a href={`/${lang}/salas/`} class="text-sm text-stone-400 hover:text-stone-100 transition-colors">
+            {t('nav.rooms')}
+          </a>
+          <select
+            id="lang-switch"
+            class="bg-stone-900 border border-stone-700 rounded px-2 py-1 text-sm"
+            data-current={lang}
+          >
+            {Object.entries(languages).map(([code, name]) => (
+              <option value={code} selected={code === lang}>{name}</option>
+            ))}
+          </select>
+        </div>
+      </nav>
+    </header>
+    <main class="relative z-10 max-w-3xl mx-auto px-6 py-12">
+      <slot />
+    </main>
+
+    <script>
+      const select = document.getElementById('lang-switch') as HTMLSelectElement;
+      select?.addEventListener('change', () => {
+        const current = select.dataset.current;
+        const target = select.value;
+        // Troca o idioma mantendo a página atual (ex: /pt/salas/nevoa -> /en/salas/nevoa)
+        const path = window.location.pathname.replace(`/${current}/`, `/${target}/`);
+        window.location.pathname = path;
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,87 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import BookReader from '../../../components/BookReader.astro';
+import ChapterCover from '../../../components/ChapterCover.astro';
+import { languages, type Lang } from '../../../i18n/config';
+import { useTranslations } from '../../../i18n/ui';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allSalas = await getCollection('salas');
+  return allSalas.map((entry) => {
+    const [slug, lang] = entry.id.split('/');
+    return {
+      params: { lang, slug },
+      props: { entry },
+    };
+  });
+}
+
+const { lang, slug } = Astro.params as { lang: Lang; slug: string };
+const { entry } = Astro.props;
+const t = useTranslations(lang);
+
+// Divide o corpo em markdown bruto em parágrafos (separados por linha em branco),
+// removendo comentários de rascunho e normalizando espaços.
+const rawParagraphs = entry.body
+  .split(/\n\s*\n/)
+  .map((p) => p.trim())
+  .filter((p) => p.length > 0 && !p.startsWith('#'));
+
+// Marcadores de ambiente embutidos no texto: um parágrafo sozinho como
+// "[ambient: color=#hex effect=fog]" muda o clima de fundo a partir dali,
+// sem aparecer como texto de leitura.
+const AMBIENT_MARKER = /^\[ambient:\s*color=(#[0-9a-fA-F]{3,8})\s+effect=(fog|steam|dust|embers|snow|none)\]$/i;
+
+const paragraphs: string[] = [];
+const themeMarkers: { atIndex: number; color: string; effect: string }[] = [];
+
+for (const p of rawParagraphs) {
+  const match = p.match(AMBIENT_MARKER);
+  if (match) {
+    themeMarkers.push({ atIndex: paragraphs.length, color: match[1], effect: match[2].toLowerCase() });
+  } else {
+    paragraphs.push(p);
+  }
+}
+---
+
+<BaseLayout
+  lang={lang}
+  title={entry.data.title}
+  ambientColor={entry.data.ambientColor}
+  ambientEffect={entry.data.ambientEffect}
+>
+  <ChapterCover slug={slug} lang={lang} chapterLabel={entry.data.title} openLabel={t('cover.open')} />
+
+  <div class="book-wrap-container">
+    <a href={`/${lang}/salas/`} class="text-sm text-stone-400 hover:text-stone-100 transition-colors">
+      ← {t('rooms.back')}
+    </a>
+    <h1 class="text-3xl mt-4 mb-8 tracking-wide">{entry.data.title}</h1>
+
+    <BookReader
+      title={entry.data.title}
+      paragraphs={paragraphs}
+      themeMarkers={themeMarkers}
+      baseAmbientColor={entry.data.ambientColor}
+      baseAmbientEffect={entry.data.ambientEffect}
+      pageTheme={entry.data.readerTheme}
+      prevLabel={t('reader.prev')}
+      nextLabel={t('reader.next')}
+      ofLabel={t('reader.of')}
+    />
+  </div>
+</BaseLayout>
+
+<style>
+  .book-wrap-container {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease;
+  }
+  .book-wrap-container.reader-visible {
+    opacity: 1;
+    visibility: visible;
+  }
+</style>

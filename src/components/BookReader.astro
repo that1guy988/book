@@ -1,0 +1,1253 @@
+---
+interface ThemeMarker {
+  atIndex: number;
+  color: string;
+  effect: string;
+}
+
+interface Props {
+  title: string;
+  paragraphs: string[]; // parágrafos já limpos (texto puro, com *itálico* opcional)
+  themeMarkers?: ThemeMarker[]; // trocas de clima de fundo embutidas no texto
+  baseAmbientColor?: string;
+  baseAmbientEffect?: string;
+  pageTheme?: 'default' | 'frost' | 'watercolor' | 'mist'; // paleta da própria página do leitor
+  pigmentPalette?: string[]; // cores usadas nas partículas/sangramento do tema watercolor
+  prevLabel: string;
+  nextLabel: string;
+  ofLabel: string; // ex: "de" -> "Página 3 de 12"
+}
+
+const {
+  title,
+  paragraphs,
+  themeMarkers = [],
+  baseAmbientColor = '#7a2e2e',
+  baseAmbientEffect = 'none',
+  pageTheme = 'default',
+  pigmentPalette = ['#5b7fb5', '#c1607a', '#8a5fb0', '#5fa87e'],
+  prevLabel,
+  nextLabel,
+  ofLabel,
+} = Astro.props;
+---
+
+<div class="book-wrap" data-title={title} data-of-label={ofLabel} data-theme={pageTheme} style={`--room-glow: ${baseAmbientColor};`}>
+  <div class="book" id="book">
+    <div class="book-spine" aria-hidden="true"></div>
+
+    <!-- página base: sempre mostra o conteúdo da página atual -->
+    <div class="page page-base" id="page-base">
+      <div class="page-frost" aria-hidden="true">
+        {Array.from({ length: 16 }).map((_, i) => (
+          <span
+            class="frost-flake"
+            style={`left:${(i * 41) % 100}%; width:${2 + (i % 3)}px; height:${2 + (i % 3)}px; animation-duration:${(9 + (i % 6) * 1.4).toFixed(1)}s; animation-delay:${(-(i * 0.6)).toFixed(1)}s; --fdrift:${((i % 5) - 2) * 2.5}vw;`}
+          ></span>
+        ))}
+      </div>
+      <div class="ink-stain" id="ink-stain" aria-hidden="true"></div>
+      <div class="fog-dissolve" id="fog-dissolve" aria-hidden="true"></div>
+      <div class="matcha-dust" aria-hidden="true">
+        {Array.from({ length: 18 }).map((_, i) => (
+          <span
+            class="matcha-mote"
+            style={`left:${(i * 29) % 100}%; top:${(i * 53) % 100}%; animation-duration:${(11 + (i % 5) * 1.7).toFixed(1)}s; animation-delay:${(-(i * 0.8)).toFixed(1)}s;`}
+          ></span>
+        ))}
+      </div>
+      <div class="page-inner"></div>
+      <div class="summer-light" aria-hidden="true"></div>
+      <div class="invisible-door" aria-hidden="true"></div>
+      <div class="page-edges" aria-hidden="true"></div>
+    </div>
+
+    <!-- rastro residual do texto da página anterior (tema mist) -->
+    <div class="page-ghost" id="page-ghost" aria-hidden="true"></div>
+
+    <!-- folha que anima o giro por cima da página base -->
+    <div class="leaf" id="leaf">
+      <div class="page-face leaf-front">
+        <div class="page-inner"></div>
+        <div class="fold-mist" aria-hidden="true"></div>
+      </div>
+      <div class="page-face leaf-back">
+        <div class="page-inner"></div>
+      </div>
+    </div>
+
+    <div class="pigment-particles" id="pigment-particles" aria-hidden="true"></div>
+    <div class="mist-cursor" id="mist-cursor" aria-hidden="true"></div>
+
+    <button class="tap-zone tap-prev" id="tap-prev" aria-label={prevLabel}></button>
+    <button class="tap-zone tap-next" id="tap-next" aria-label={nextLabel}></button>
+  </div>
+
+  <div class="book-controls">
+    <button class="ctrl-btn" id="prev-page" aria-label={prevLabel}>‹ {prevLabel}</button>
+    <span class="page-indicator" id="page-indicator">…</span>
+    <button class="ctrl-btn" id="next-page" aria-label={nextLabel}>{nextLabel} ›</button>
+  </div>
+</div>
+
+<template id="paragraphs-data">{JSON.stringify(paragraphs)}</template>
+<template id="theme-markers-data">{JSON.stringify(themeMarkers)}</template>
+<template id="base-ambient-data">{JSON.stringify({ color: baseAmbientColor, effect: baseAmbientEffect })}</template>
+<template id="pigment-palette-data">{JSON.stringify(pigmentPalette)}</template>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="ink-wobble">
+    <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="4" result="noise">
+      <animate
+        attributeName="baseFrequency"
+        values="0.012 0.018;0.016 0.014;0.012 0.018"
+        dur="14s"
+        repeatCount="indefinite"
+      />
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.4" xChannelSelector="R" yChannelSelector="G" />
+  </filter>
+  <filter id="ceramic-noise">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="noise" />
+    <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.05 0" />
+  </filter>
+</svg>
+
+<style>
+  .book-wrap {
+    --paper: #f1e9d8;
+    --paper-shadow: #e2d5b8;
+    --ink: #2b2420;
+    --ink-soft: #5c4f42;
+    --accent: #7a2e2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .book {
+    position: relative;
+    width: min(100%, 620px);
+    aspect-ratio: 3 / 4;
+    perspective: 2200px;
+    filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.45));
+  }
+
+  .page {
+    position: absolute;
+    inset: 0;
+    background: var(--paper);
+    border-radius: 2px;
+    box-shadow:
+      inset 0 0 0 1px rgba(43, 36, 32, 0.08),
+      3px 0 0 var(--paper-shadow),
+      6px 0 0 rgba(226, 213, 184, 0.7),
+      9px 0 0 rgba(226, 213, 184, 0.4);
+  }
+
+  .page-edges {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    right: -9px;
+    width: 9px;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(43, 36, 32, 0.06) 0px,
+      rgba(43, 36, 32, 0.06) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    border-radius: 0 2px 2px 0;
+  }
+
+  .page-inner {
+    position: absolute;
+    inset: 0;
+    padding: clamp(1.5rem, 5%, 3rem);
+    padding-top: clamp(2.5rem, 8%, 4rem);
+    overflow: hidden;
+    color: var(--ink);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(0.95rem, 1.6vw, 1.05rem);
+    line-height: 1.75;
+  }
+
+  .page-inner::before {
+    content: attr(data-chapter-title);
+    display: block;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 1.25rem;
+    opacity: 0.75;
+  }
+
+  .page-inner p {
+    margin: 0 0 1em 0;
+  }
+
+  .page-inner p.first-para::first-letter {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 2.8em;
+    float: left;
+    line-height: 0.8;
+    padding: 0.05em 0.08em 0 0;
+    color: var(--accent);
+  }
+
+  .page-inner em {
+    color: var(--ink-soft);
+  }
+
+  /* ============ Tema: Frost (sala da mulher de neve) ============ */
+  .book-wrap[data-theme='frost'] {
+    --paper: #eef3f6;
+    --paper-shadow: #d8e3ea;
+    --ink: #2c3e50;
+    --ink-soft: #5b7086;
+    --accent: #6f93ad;
+  }
+
+  .book-wrap[data-theme='frost'] .page-inner {
+    filter: grayscale(20%) brightness(105%) contrast(90%);
+  }
+
+  .book-wrap[data-theme='frost'] .page-inner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle, transparent 58%, rgba(255, 255, 255, 0.16) 100%);
+  }
+
+  .book-wrap[data-theme='frost'] .page-inner p {
+    transition: opacity 0.35s ease, filter 0.35s ease;
+  }
+
+  .book-wrap[data-theme='frost'] .page-inner p:hover {
+    opacity: 0.94;
+    filter: blur(0.4px);
+  }
+
+  .book-wrap[data-theme='frost'] .leaf.turning .leaf-front {
+    box-shadow:
+      inset 0 0 0 1px rgba(43, 36, 32, 0.08),
+      inset 10px 0 22px rgba(200, 230, 255, 0.35),
+      40px 0 60px -20px rgba(0, 0, 0, 0.3);
+  }
+
+  /* flocos de gelo caindo atrás do texto, dentro da própria página */
+  .page-frost {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    display: none;
+  }
+  .book-wrap[data-theme='frost'] .page-frost {
+    display: block;
+  }
+  .frost-flake {
+    position: absolute;
+    top: -6%;
+    border-radius: 50%;
+    background: #ffffff;
+    opacity: 0.5;
+    filter: blur(0.3px);
+    animation-name: frost-fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes frost-fall {
+    0% { transform: translate(0, 0); opacity: 0; }
+    12% { opacity: 0.55; }
+    88% { opacity: 0.3; }
+    100% { transform: translate(var(--fdrift, 0), 118%); opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .frost-flake { animation: none !important; }
+  }
+
+  /* ============ Tema: Watercolor (sala da artista) ============ */
+  .book-wrap[data-theme='watercolor'] {
+    --paper: #f7f3ee;
+    --paper-shadow: #e9dfd2;
+    --ink: #3b2e3a;
+    --ink-soft: #6b5670;
+    --accent: #b0577a;
+  }
+
+  /* mancha de tinta que reage ao ponteiro/toque, atrás do texto */
+  .ink-stain {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    display: none;
+    opacity: 0.9;
+    background: radial-gradient(
+      circle at var(--mx, 50%) var(--my, 40%),
+      rgba(140, 90, 160, 0.16) 0%,
+      rgba(90, 120, 180, 0.08) 32%,
+      transparent 60%
+    );
+    mix-blend-mode: multiply;
+    transition: background 0.25s ease;
+  }
+  .book-wrap[data-theme='watercolor'] .ink-stain {
+    display: block;
+  }
+
+  .book-wrap[data-theme='watercolor'] .page-inner p {
+    filter: url('#ink-wobble');
+  }
+
+  .book-wrap[data-theme='watercolor'] .leaf.turning .leaf-front {
+    box-shadow:
+      inset 0 0 0 1px rgba(43, 36, 32, 0.08),
+      inset 14px 0 28px var(--fold-color, rgba(140, 90, 160, 0.32)),
+      40px 0 60px -20px rgba(0, 0, 0, 0.3);
+  }
+
+  /* partículas de pigmento emitidas na dobra ao virar a página */
+  .pigment-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .pigment-dot {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    opacity: 0.85;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    filter: blur(0.3px);
+  }
+  .pigment-dot.fade {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.6);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .book-wrap[data-theme='watercolor'] .page-inner p {
+      filter: none;
+    }
+  }
+
+  /* ============ Tema: Mist (sala da névoa) ============ */
+  .book-wrap[data-theme='mist'] {
+    --paper: #eef1f5;
+    --paper-shadow: #dbe2ea;
+    --ink: #3a4250;
+    --ink-soft: #6b7686;
+    --accent: #7d93b8;
+  }
+
+  /* 2. Luz das portas: bordas do livro pulsam com a cor da sala */
+  .book-wrap[data-theme='mist'] .book {
+    animation: mist-edge-glow 5s ease-in-out infinite;
+  }
+  @keyframes mist-edge-glow {
+    0%, 100% {
+      filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 18px var(--room-glow, rgba(150, 170, 210, 0.35)));
+    }
+    50% {
+      filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 34px var(--room-glow, rgba(150, 170, 210, 0.55)));
+    }
+  }
+
+  /* 1. Névoa de transição: dissolve o conteúdo ao virar + mancha que segue o ponteiro */
+  .fog-dissolve {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    display: none;
+    background: radial-gradient(
+      circle at var(--mx, 50%) var(--my, 50%),
+      rgba(255, 255, 255, 0.35) 0%,
+      rgba(255, 255, 255, 0.08) 35%,
+      transparent 62%
+    );
+    transition: background 0.3s ease;
+  }
+  .book-wrap[data-theme='mist'] .fog-dissolve {
+    display: block;
+  }
+
+  .book-wrap[data-theme='mist'] .leaf-front .page-inner {
+    transition: filter 0.7s ease, opacity 0.7s ease;
+  }
+  .book-wrap[data-theme='mist'] .leaf.turning .leaf-front .page-inner {
+    filter: blur(6px);
+    opacity: 0.25;
+  }
+
+  /* 4. Dobra elástica com névoa mais densa na junção */
+  .book-wrap[data-theme='mist'] .leaf.turning {
+    transition: transform 0.85s cubic-bezier(0.68, -0.4, 0.25, 1.35);
+  }
+  .fold-mist {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.75), transparent 30%);
+    transition: opacity 0.5s ease;
+  }
+  .book-wrap[data-theme='mist'] .leaf.turning .fold-mist {
+    opacity: 1;
+  }
+
+  /* 3. Memória das páginas: rastro residual do texto anterior */
+  .page-ghost {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    padding: clamp(1.5rem, 5%, 3rem);
+    padding-top: clamp(2.5rem, 8%, 4rem);
+    overflow: hidden;
+    color: var(--ink-soft);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: clamp(0.95rem, 1.6vw, 1.05rem);
+    line-height: 1.75;
+    opacity: 0;
+    filter: blur(2px);
+    transition: opacity 1.1s ease, filter 1.1s ease;
+  }
+  .page-ghost.showing {
+    opacity: 0.22;
+    filter: blur(3px);
+  }
+
+  /* 5. Cursor de interação com a névoa: ponto de luz que segue o ponteiro */
+  .mist-cursor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.25) 45%, transparent 75%);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 6;
+    opacity: 0;
+    transition: opacity 0.3s ease, width 0.35s ease, height 0.35s ease;
+  }
+  .book-wrap[data-theme='mist'] .mist-cursor.active {
+    opacity: 1;
+  }
+  .mist-cursor.expand {
+    width: 90px;
+    height: 90px;
+  }
+  .book-wrap[data-theme='mist'] .book {
+    cursor: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .book-wrap[data-theme='mist'] .book {
+      animation: none;
+    }
+    .book-wrap[data-theme='mist'] .leaf.turning {
+      transition: transform 0.7s ease;
+    }
+  }
+
+  @media (hover: none) {
+    .book-wrap[data-theme='mist'] .book {
+      cursor: auto;
+    }
+    .mist-cursor {
+      display: none;
+    }
+  }
+
+  /* ============ Tema: Matcha (sala da mulher de chá) ============ */
+  .book-wrap[data-theme='matcha'] {
+    --paper: #eef2e6;
+    --paper-shadow: #d9e4cb;
+    --ink: #3d4a37;
+    --ink-soft: #6d7d63;
+    --accent: #6f8f5c;
+  }
+
+  /* 1. Subsurface scattering simulado: luz que parece vir de dentro da página */
+  .book-wrap[data-theme='matcha'] .page,
+  .book-wrap[data-theme='matcha'] .page-face {
+    background: radial-gradient(circle at center, #d8e6c9 0%, #a8c69f 100%);
+  }
+
+  /* 4. Borda de tigela de cerâmica: assimétrica, artesanal */
+  .book-wrap[data-theme='matcha'] .page {
+    border-radius: 3px 14px 3px 18px / 3px 22px 3px 26px;
+    border: 2px solid rgba(168, 198, 159, 0.5);
+  }
+  .book-wrap[data-theme='matcha'] .page-inner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    filter: url('#ceramic-noise');
+    mix-blend-mode: multiply;
+  }
+
+  /* 2. Poeira de matcha: partículas suspensas que reagem à virada */
+  .matcha-dust {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    display: none;
+  }
+  .book-wrap[data-theme='matcha'] .matcha-dust {
+    display: block;
+  }
+  .matcha-mote {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #6f8f5c;
+    opacity: 0.1;
+    animation-name: matcha-float;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    transition: transform 0.6s ease 0.05s;
+  }
+  @keyframes matcha-float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(0.8vw, -1.5vh); }
+  }
+  .book-wrap[data-theme='matcha'] .leaf.turning ~ .page-base .matcha-mote,
+  .book-wrap[data-theme='matcha'] .page-base.dust-shift .matcha-mote {
+    transform: translateX(0.6vw);
+  }
+
+  /* 3. Tipografia técnica: detalhes precisos em monospace */
+  .book-wrap[data-theme='matcha'] .page-inner code {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.85em;
+    background: rgba(111, 143, 92, 0.12);
+    padding: 0.05em 0.3em;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+
+  /* 5. Luz de verão: faixas translúcidas que se movem devagar sobre o texto */
+  .summer-light {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    display: none;
+    opacity: 0.35;
+    background: repeating-linear-gradient(
+      115deg,
+      rgba(255, 250, 220, 0.35) 0px,
+      rgba(255, 250, 220, 0.35) 14px,
+      transparent 14px,
+      transparent 44px
+    );
+    background-size: 200% 200%;
+    animation: summer-drift 40s linear infinite;
+    backdrop-filter: brightness(1.08) contrast(1.03);
+  }
+  .book-wrap[data-theme='matcha'] .summer-light {
+    display: block;
+  }
+  @keyframes summer-drift {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 100% 60%; }
+  }
+
+  /* 6. Página verde no verso: folha, não papel em branco */
+  .book-wrap[data-theme='matcha'] .leaf-back {
+    background:
+      radial-gradient(circle at 30% 25%, rgba(120, 150, 90, 0.4), transparent 45%),
+      radial-gradient(circle at 70% 65%, rgba(90, 120, 70, 0.35), transparent 50%),
+      linear-gradient(160deg, #4f6b42 0%, #37492f 100%);
+  }
+  .book-wrap[data-theme='matcha'] .leaf-back .page-inner {
+    opacity: 0;
+  }
+
+  /* 7. Ritmo do matcha: a virada "assenta" com um pequeno balanço */
+  .book-wrap[data-theme='matcha'] .leaf.turning {
+    transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .matcha-mote { animation: none !important; }
+    .summer-light { animation: none; }
+    .book-wrap[data-theme='matcha'] .leaf.turning {
+      transition: transform 0.6s ease;
+    }
+  }
+
+  /* ============ Tema: Cafeteria (sala da bibliotecária) ============ */
+  .book-wrap[data-theme='cafeteria'] {
+    --paper: #e8ddc9;
+    --paper-shadow: #d8c9ae;
+    --ink: #4a4038;
+    --ink-soft: #7a6d5e;
+    --accent: #8a7a63;
+  }
+
+  /* 2. Sombra difusa colorida: aura que alterna entre as cores das pessoas do café */
+  .book-wrap[data-theme='cafeteria'] .book {
+    animation: cafeteria-aura 16s ease-in-out infinite;
+  }
+  @keyframes cafeteria-aura {
+    0%, 100% { filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 20px rgba(122, 168, 150, 0.35)); }
+    25% { filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 20px rgba(120, 150, 190, 0.35)); }
+    50% { filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 20px rgba(150, 150, 160, 0.3)); }
+    75% { filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 20px rgba(160, 130, 180, 0.35)); }
+  }
+
+  /* 3. Ordem instável: as pilhas (bordas empilhadas da página) se reorganizam devagar */
+  .book-wrap[data-theme='cafeteria'] .page-edges {
+    animation: cafeteria-drift 11s ease-in-out infinite;
+  }
+  @keyframes cafeteria-drift {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    30% { transform: translateY(1px) rotate(0.3deg); }
+    60% { transform: translateY(-1px) rotate(-0.2deg); }
+  }
+
+  /* 5. Profundidade de campo: a folha desfoca enquanto está "no ar" */
+  .book-wrap[data-theme='cafeteria'] .leaf.turning {
+    filter: blur(2px);
+  }
+  .book-wrap[data-theme='cafeteria'] .leaf {
+    transition: filter 0.3s ease;
+  }
+
+  /* 1. Tinta fugidia: as falas que "surgem no ar" brilham e assentam */
+  .book-wrap[data-theme='cafeteria'] .page-inner p.materializing {
+    animation: materialize-settle 3.2s ease-out;
+  }
+  @keyframes materialize-settle {
+    0% { opacity: 0; text-shadow: 0 0 10px rgba(255, 255, 255, 0.65); }
+    18% { opacity: 1; }
+    100% { opacity: 1; text-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+  }
+
+  /* 4. Objeto fora de lugar: o ursinho roxo reage sutilmente ao passar o mouse */
+  .book-wrap[data-theme='cafeteria'] .page-inner p.easter-egg {
+    transition: transform 0.4s ease, filter 0.4s ease;
+  }
+  .book-wrap[data-theme='cafeteria'] .page-inner p.easter-egg:hover {
+    transform: scale(1.025);
+    filter: drop-shadow(0 0 8px rgba(160, 120, 190, 0.55));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .book-wrap[data-theme='cafeteria'] .book { animation: none; }
+    .book-wrap[data-theme='cafeteria'] .page-edges { animation: none; }
+    .book-wrap[data-theme='cafeteria'] .page-inner p.materializing {
+      animation: none;
+    }
+  }
+
+  /* ============ Tema: Void (a sala do próprio protagonista) ============ */
+  .book-wrap[data-theme='void'] {
+    --paper: #efe6d3;
+    --paper-shadow: #dcd3bf;
+    --ink: #38352f;
+    --ink-soft: #6b665c;
+    --accent: #7d7871;
+  }
+
+  /* 2. Respirar do vazio: o container do texto pulsa devagar, como algo vivo */
+  .book-wrap[data-theme='void'] .page {
+    animation: void-breathe 8s ease-in-out infinite;
+  }
+  @keyframes void-breathe {
+    0%, 100% { transform: scale(1); filter: contrast(1); }
+    50% { transform: scale(1.008); filter: contrast(1.06); }
+  }
+
+  /* 1. Materialização: cada página começa difusa e ganha nitidez */
+  .book-wrap[data-theme='void'] .page-inner {
+    animation: void-focus 2.6s ease-out;
+  }
+  @keyframes void-focus {
+    0% { filter: blur(6px); opacity: 0.4; }
+    100% { filter: blur(0); opacity: 1; }
+  }
+
+  /* 5. O preço: o papel esfria de um tom quente/humano para um cinza distante,
+     reiniciado a cada página virada (classe alternada via JS) */
+  .book-wrap[data-theme='void'] .page.void-drift-active {
+    animation: void-breathe 8s ease-in-out infinite, void-drift 14s ease-out forwards;
+  }
+  @keyframes void-drift {
+    0% { background: radial-gradient(circle at center, #f4e9cf 0%, #e3d6b8 100%); }
+    100% { background: radial-gradient(circle at center, #dfe2e0 0%, #c7ccd1 100%); }
+  }
+
+  /* 3. Sombra cinzenta dos visitantes: passa uma vez pelo parágrafo marcado */
+  .book-wrap[data-theme='void'] .page-inner p.gray-pass-trigger {
+    position: relative;
+  }
+  .book-wrap[data-theme='void'] .page-inner p.gray-pass-trigger::before {
+    content: '';
+    position: absolute;
+    inset: -6px -40px;
+    background: linear-gradient(90deg, transparent, rgba(120, 120, 120, 0.4), transparent);
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    animation: gray-sweep 2.4s ease-out;
+  }
+  @keyframes gray-sweep {
+    0% { transform: translateX(-130%); opacity: 0; }
+    15% { opacity: 1; }
+    100% { transform: translateX(130%); opacity: 0; }
+  }
+
+  /* 4. A névoa que se dissipa: o parágrafo do ser de névoa desfoca e clareia */
+  .book-wrap[data-theme='void'] .page-inner p.mist-trigger {
+    animation: mist-dissipate 2.4s ease-out;
+  }
+  @keyframes mist-dissipate {
+    0% { filter: blur(5px); opacity: 0.35; }
+    100% { filter: blur(0); opacity: 1; }
+  }
+
+  /* 6. A porta invisível: uma área discreta reage ao mouse, convidando a tentar */
+  .invisible-door {
+    position: absolute;
+    right: 8%;
+    bottom: 10%;
+    width: 18%;
+    height: 22%;
+    display: none;
+    border-radius: 2px;
+    transition: outline-color 0.4s ease, background 0.4s ease;
+    outline: 1px solid transparent;
+    outline-offset: -1px;
+  }
+  .book-wrap[data-theme='void'] .invisible-door {
+    display: block;
+    cursor: pointer;
+  }
+  .book-wrap[data-theme='void'] .invisible-door:hover {
+    outline-color: rgba(120, 120, 120, 0.25);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .book-wrap[data-theme='void'] .page {
+      animation: none;
+    }
+    .book-wrap[data-theme='void'] .page-inner {
+      animation: none;
+    }
+    .book-wrap[data-theme='void'] .page-inner p.gray-pass-trigger::before,
+    .book-wrap[data-theme='void'] .page-inner p.mist-trigger {
+      animation: none;
+    }
+  }
+
+  .leaf {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transform-origin: left center;
+    transform: rotateY(0deg);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .leaf.turning {
+    transition: transform 0.7s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+  }
+
+  .leaf.turning-back {
+    transform-origin: right center;
+  }
+
+  .page-face {
+    position: absolute;
+    inset: 0;
+    background: var(--paper);
+    backface-visibility: hidden;
+    border-radius: 2px;
+    box-shadow: inset 0 0 0 1px rgba(43, 36, 32, 0.08);
+  }
+
+  .leaf-front {
+    z-index: 2;
+  }
+
+  .leaf-back {
+    transform: rotateY(180deg);
+    z-index: 1;
+  }
+
+  .leaf.turning .leaf-front {
+    box-shadow:
+      inset 0 0 0 1px rgba(43, 36, 32, 0.08),
+      40px 0 60px -20px rgba(0, 0, 0, 0.35);
+  }
+
+  .tap-zone {
+    position: absolute;
+    top: 8%;
+    bottom: 8%;
+    width: 18%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 3;
+  }
+  .tap-prev {
+    left: 0;
+  }
+  .tap-next {
+    right: 0;
+  }
+
+  .book-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .ctrl-btn {
+    background: transparent;
+    border: 1px solid rgba(214, 204, 186, 0.35);
+    color: #d6ccba;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .ctrl-btn:hover:not(:disabled) {
+    border-color: #d6ccba;
+    color: #fff;
+  }
+  .ctrl-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .page-indicator {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.8rem;
+    color: #a89a86;
+    min-width: 7rem;
+    text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    .book {
+      aspect-ratio: 2 / 3;
+    }
+  }
+</style>
+
+<script>
+  function initBookReader(root: HTMLElement) {
+    const dataEl = root.parentElement?.querySelector('#paragraphs-data') as HTMLTemplateElement | null;
+    const themeMarkersEl = root.parentElement?.querySelector('#theme-markers-data') as HTMLTemplateElement | null;
+    const baseAmbientEl = root.parentElement?.querySelector('#base-ambient-data') as HTMLTemplateElement | null;
+    const pigmentPaletteEl = root.parentElement?.querySelector('#pigment-palette-data') as HTMLTemplateElement | null;
+    const title = root.dataset.title ?? '';
+    const ofLabel = root.dataset.ofLabel ?? 'of';
+    const pageTheme = root.dataset.theme ?? 'default';
+    if (!dataEl) return;
+
+    let paragraphs: string[] = [];
+    try {
+      paragraphs = JSON.parse(dataEl.content.textContent || '[]');
+    } catch {
+      paragraphs = [];
+    }
+
+    type ThemeMarker = { atIndex: number; color: string; effect: string };
+    let themeMarkers: ThemeMarker[] = [];
+    try {
+      themeMarkers = JSON.parse(themeMarkersEl?.content.textContent || '[]');
+    } catch {
+      themeMarkers = [];
+    }
+
+    let baseAmbient = { color: '#7a2e2e', effect: 'none' };
+    try {
+      baseAmbient = JSON.parse(baseAmbientEl?.content.textContent || '{}') || baseAmbient;
+    } catch {
+      // mantém o padrão
+    }
+
+    let pigmentPalette: string[] = ['#5b7fb5', '#c1607a', '#8a5fb0', '#5fa87e'];
+    try {
+      const parsed = JSON.parse(pigmentPaletteEl?.content.textContent || '[]');
+      if (Array.isArray(parsed) && parsed.length > 0) pigmentPalette = parsed;
+    } catch {
+      // mantém o padrão
+    }
+
+    const book = root.querySelector('#book') as HTMLElement;
+    const pageBase = root.querySelector('#page-base .page-inner') as HTMLElement;
+    const pageBaseOuter = root.querySelector('#page-base') as HTMLElement;
+    const leaf = root.querySelector('#leaf') as HTMLElement;
+    const leafFront = root.querySelector('.leaf-front .page-inner') as HTMLElement;
+    const leafBack = root.querySelector('.leaf-back .page-inner') as HTMLElement;
+    const indicator = root.querySelector('#page-indicator') as HTMLElement;
+    const prevBtn = root.querySelector('#prev-page') as HTMLButtonElement;
+    const nextBtn = root.querySelector('#next-page') as HTMLButtonElement;
+    const tapPrev = root.querySelector('#tap-prev') as HTMLButtonElement;
+    const tapNext = root.querySelector('#tap-next') as HTMLButtonElement;
+    const inkStain = root.querySelector('#ink-stain') as HTMLElement | null;
+    const pigmentLayer = root.querySelector('#pigment-particles') as HTMLElement | null;
+    const fogDissolve = root.querySelector('#fog-dissolve') as HTMLElement | null;
+    const mistCursor = root.querySelector('#mist-cursor') as HTMLElement | null;
+    const pageGhost = root.querySelector('#page-ghost') as HTMLElement | null;
+
+    // --- Tema "mist": névoa que segue o ponteiro (dissolve) + cursor de luz ---
+    if (pageTheme === 'mist' && (fogDissolve || mistCursor)) {
+      const updateMist = (clientX: number, clientY: number) => {
+        const rect = book.getBoundingClientRect();
+        const x = ((clientX - rect.left) / rect.width) * 100;
+        const y = ((clientY - rect.top) / rect.height) * 100;
+        fogDissolve?.style.setProperty('--mx', `${x}%`);
+        fogDissolve?.style.setProperty('--my', `${y}%`);
+        if (mistCursor) {
+          mistCursor.style.left = `${clientX - rect.left}px`;
+          mistCursor.style.top = `${clientY - rect.top}px`;
+        }
+      };
+      book.addEventListener('pointerenter', () => mistCursor?.classList.add('active'));
+      book.addEventListener('pointerleave', () => mistCursor?.classList.remove('active'));
+      book.addEventListener('pointermove', (e) => updateMist(e.clientX, e.clientY));
+    }
+
+    // 5. Cursor de luz "explora" o conteúdo ao clicar pra virar a página
+    function pulseMistCursor() {
+      if (pageTheme !== 'mist' || !mistCursor) return;
+      mistCursor.classList.add('expand');
+      window.setTimeout(() => mistCursor.classList.remove('expand'), 500);
+    }
+
+    // 3. Memória das páginas: deixa um rastro residual do texto anterior
+    function showPageGhost(previousHtml: string) {
+      if (pageTheme !== 'mist' || !pageGhost) return;
+      pageGhost.dataset.chapterTitle = title;
+      pageGhost.innerHTML = previousHtml;
+      pageGhost.classList.remove('showing');
+      void pageGhost.offsetWidth;
+      pageGhost.classList.add('showing');
+      window.setTimeout(() => pageGhost.classList.remove('showing'), 900);
+    }
+
+    // --- Tema "void": reinicia a materialização (foco) e o esfriamento do papel a cada página ---
+    function restartVoidAnimations() {
+      if (pageTheme !== 'void') return;
+      pageBase.style.animation = 'none';
+      void pageBase.offsetWidth;
+      pageBase.style.animation = '';
+      pageBaseOuter.classList.remove('void-drift-active');
+      void pageBaseOuter.offsetWidth;
+      pageBaseOuter.classList.add('void-drift-active');
+    }
+
+    // --- Tema "watercolor": mancha de tinta segue o ponteiro ---
+    if (pageTheme === 'watercolor' && inkStain) {
+      const updateStain = (clientX: number, clientY: number) => {
+        const rect = book.getBoundingClientRect();
+        const x = ((clientX - rect.left) / rect.width) * 100;
+        const y = ((clientY - rect.top) / rect.height) * 100;
+        inkStain.style.setProperty('--mx', `${x}%`);
+        inkStain.style.setProperty('--my', `${y}%`);
+      };
+      book.addEventListener('pointermove', (e) => updateStain(e.clientX, e.clientY));
+      book.addEventListener(
+        'touchmove',
+        (e) => {
+          const touch = e.touches[0];
+          if (touch) updateStain(touch.clientX, touch.clientY);
+        },
+        { passive: true }
+      );
+    }
+
+    // --- Tema "watercolor": partículas de pigmento na dobra ao virar a página ---
+    function spawnPigment(edge: 'left' | 'right') {
+      if (pageTheme !== 'watercolor' || !pigmentLayer) return;
+      const count = 6 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < count; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'pigment-dot';
+        const color = pigmentPalette[Math.floor(Math.random() * pigmentPalette.length)];
+        const top = 10 + Math.random() * 80;
+        const x = edge === 'left' ? Math.random() * 6 : 94 + Math.random() * 6;
+        dot.style.background = color;
+        dot.style.top = `${top}%`;
+        dot.style.left = `${x}%`;
+        pigmentLayer.appendChild(dot);
+        window.setTimeout(() => dot.classList.add('fade'), 30);
+        window.setTimeout(() => dot.remove(), 650);
+      }
+    }
+
+    // --- Tema "watercolor": a dobra herda uma cor de pigmento a cada virada ---
+    let pigmentIndex = 0;
+    function nextFoldColor(): string {
+      const hex = pigmentPalette[pigmentIndex % pigmentPalette.length];
+      pigmentIndex += 1;
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, 0.32)`;
+    }
+
+    function renderMarkup(text: string): string {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`(.+?)`/g, '<code>$1</code>');
+    }
+
+    const QUOTE_OPENERS = ['"', '«', '「', '\u201C'];
+    const QUOTE_CLOSERS = ['"', '»', '」', '\u201D'];
+    function isMaterializingLine(text: string): boolean {
+      const t = text.trim();
+      if (t.length < 2) return false;
+      const idx = QUOTE_OPENERS.indexOf(t[0]);
+      if (idx === -1) return false;
+      return t[t.length - 1] === QUOTE_CLOSERS[idx];
+    }
+
+    // Marcadores inline no markdown: "{{tag}} " no início de um parágrafo vira
+    // uma classe CSS naquele <p> e é removido do texto visível.
+    const PARAGRAPH_MARKERS: Record<string, string> = {
+      '{{easter-egg}} ': 'easter-egg',
+      '{{mist-being}} ': 'mist-trigger',
+      '{{gray-pass}} ': 'gray-pass-trigger',
+    };
+
+    function paintPage(container: HTMLElement, pageParas: string[], isFirstPage: boolean) {
+      container.dataset.chapterTitle = title;
+      container.innerHTML = pageParas
+        .map((p, i) => {
+          const classes = [isFirstPage && i === 0 ? 'first-para' : ''];
+          let text = p;
+          for (const [tag, cls] of Object.entries(PARAGRAPH_MARKERS)) {
+            if (text.startsWith(tag)) {
+              text = text.slice(tag.length);
+              classes.push(cls);
+              break;
+            }
+          }
+          if (pageTheme === 'cafeteria' && isMaterializingLine(text)) classes.push('materializing');
+          return `<p class="${classes.filter(Boolean).join(' ')}">${renderMarkup(text)}</p>`;
+        })
+        .join('');
+    }
+
+    // Mede e divide os parágrafos em páginas que cabem no container.
+    function paginate(): string[][] {
+      const measurer = document.createElement('div');
+      const template = pageBase;
+      measurer.style.position = 'absolute';
+      measurer.style.visibility = 'hidden';
+      measurer.style.pointerEvents = 'none';
+      measurer.style.width = template.clientWidth + 'px';
+      measurer.style.height = template.clientHeight + 'px';
+      measurer.style.padding = getComputedStyle(template).padding;
+      measurer.style.paddingTop = getComputedStyle(template).paddingTop;
+      measurer.style.fontSize = getComputedStyle(template).fontSize;
+      measurer.style.lineHeight = getComputedStyle(template).lineHeight;
+      measurer.style.fontFamily = getComputedStyle(template).fontFamily;
+      measurer.style.boxSizing = 'border-box';
+      measurer.style.overflow = 'hidden';
+      document.body.appendChild(measurer);
+
+      const pages: string[][] = [];
+      let current: string[] = [];
+
+      for (const para of paragraphs) {
+        const testEl = document.createElement('p');
+        testEl.textContent = para;
+        measurer.appendChild(testEl);
+        if (measurer.scrollHeight > measurer.clientHeight && current.length > 0) {
+          measurer.removeChild(testEl);
+          pages.push(current);
+          current = [para];
+          measurer.innerHTML = '';
+          const reAdd = document.createElement('p');
+          reAdd.textContent = para;
+          measurer.appendChild(reAdd);
+        } else {
+          current.push(para);
+        }
+      }
+      if (current.length > 0) pages.push(current);
+      document.body.removeChild(measurer);
+      return pages.length > 0 ? pages : [[]];
+    }
+
+    let pages: string[][] = [];
+    let pageStartIndex: number[] = []; // índice do 1º parágrafo (na lista global) de cada página
+    let index = 0;
+    let animating = false;
+
+    function computePageStarts() {
+      pageStartIndex = [];
+      let cursor = 0;
+      for (const page of pages) {
+        pageStartIndex.push(cursor);
+        cursor += page.length;
+      }
+    }
+
+    function themeForPage(i: number): { color: string; effect: string } {
+      const startIdx = pageStartIndex[i] ?? 0;
+      let active = baseAmbient;
+      for (const marker of themeMarkers) {
+        if (marker.atIndex <= startIdx) {
+          active = { color: marker.color, effect: marker.effect };
+        }
+      }
+      return active;
+    }
+
+    function applyAmbientForPage(i: number) {
+      const theme = themeForPage(i);
+      const setAmbient = (window as any).__setAmbient as
+        | ((color: string, effect: string) => void)
+        | undefined;
+      setAmbient?.(theme.color, theme.effect);
+    }
+
+    function updateIndicator() {
+      indicator.textContent = `${index + 1} ${ofLabel} ${pages.length}`;
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index >= pages.length - 1;
+      tapPrev.style.display = index === 0 ? 'none' : 'block';
+      tapNext.style.display = index >= pages.length - 1 ? 'none' : 'block';
+    }
+
+    function showPage(i: number) {
+      paintPage(pageBase, pages[i] ?? [], i === 0);
+      updateIndicator();
+      applyAmbientForPage(i);
+      if (pageTheme === 'watercolor') {
+        const setAmbient = (window as any).__setAmbient as
+          | ((color: string, effect: string) => void)
+          | undefined;
+        const tint = pigmentPalette[i % pigmentPalette.length];
+        setAmbient?.(tint, baseAmbient.effect);
+      }
+      restartVoidAnimations();
+    }
+
+    function goNext() {
+      if (animating || index >= pages.length - 1) return;
+      animating = true;
+      paintPage(leafFront, pages[index], index === 0);
+      paintPage(leafBack, pages[index + 1], false);
+      leaf.classList.remove('turning-back');
+      leaf.style.transform = 'rotateY(0deg)';
+      if (pageTheme === 'watercolor') {
+        leaf.style.setProperty('--fold-color', nextFoldColor());
+        spawnPigment('left');
+      }
+      if (pageTheme === 'mist') {
+        showPageGhost(pageBase.innerHTML);
+        pulseMistCursor();
+      }
+      // força reflow antes de animar
+      void leaf.offsetWidth;
+      leaf.classList.add('turning');
+      leaf.style.transform = 'rotateY(-180deg)';
+
+      const onEnd = () => {
+        leaf.removeEventListener('transitionend', onEnd);
+        leaf.classList.remove('turning');
+        leaf.style.transform = 'rotateY(0deg)';
+        index += 1;
+        showPage(index);
+        paintPage(leafFront, pages[index] ?? [], index === 0);
+        animating = false;
+      };
+      leaf.addEventListener('transitionend', onEnd);
+    }
+
+    function goPrev() {
+      if (animating || index <= 0) return;
+      animating = true;
+      index -= 1;
+      paintPage(leafFront, pages[index], index === 0);
+      paintPage(leafBack, pages[index + 1] ?? [], false);
+      leaf.classList.add('turning-back');
+      leaf.style.transform = 'rotateY(-180deg)';
+      if (pageTheme === 'watercolor') {
+        leaf.style.setProperty('--fold-color', nextFoldColor());
+        spawnPigment('right');
+      }
+      if (pageTheme === 'mist') {
+        showPageGhost(pageBase.innerHTML);
+        pulseMistCursor();
+      }
+      void leaf.offsetWidth;
+      leaf.classList.add('turning');
+      leaf.style.transform = 'rotateY(0deg)';
+
+      const onEnd = () => {
+        leaf.removeEventListener('transitionend', onEnd);
+        leaf.classList.remove('turning', 'turning-back');
+        showPage(index);
+        paintPage(leafFront, pages[index] ?? [], index === 0);
+        animating = false;
+      };
+      leaf.addEventListener('transitionend', onEnd);
+    }
+
+    nextBtn.addEventListener('click', goNext);
+    prevBtn.addEventListener('click', goPrev);
+    tapNext.addEventListener('click', goNext);
+    tapPrev.addEventListener('click', goPrev);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') goNext();
+      if (e.key === 'ArrowLeft') goPrev();
+    });
+
+    function setup() {
+      pages = paginate();
+      computePageStarts();
+      index = 0;
+      showPage(0);
+      paintPage(leafFront, pages[0] ?? [], true);
+    }
+
+    setup();
+    let resizeTimer: ReturnType<typeof setTimeout>;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(setup, 200);
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('.book-wrap').forEach(initBookReader);
+</script>

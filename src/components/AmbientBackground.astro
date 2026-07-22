@@ -1,0 +1,275 @@
+---
+interface Props {
+  color: string;
+  effect: 'fog' | 'steam' | 'dust' | 'embers' | 'snow' | 'none';
+}
+
+const { color, effect } = Astro.props;
+---
+
+<div class="ambient-root" id="ambient-root" aria-hidden="true"></div>
+
+<script define:vars={{ initialColor: color, initialEffect: effect }}>
+  // Constrói o markup de uma camada de ambiente para um efeito+cor dados.
+  // Reaproveitado tanto na renderização inicial quanto nas trocas dinâmicas
+  // disparadas pelo leitor (BookReader) ao virar de página.
+  function buildAmbientLayer(effect, color) {
+    const layer = document.createElement('div');
+    layer.className = 'ambient-layer';
+    layer.dataset.effect = effect;
+    layer.style.setProperty('--ambient-color', color);
+    if (effect === 'none') return layer;
+
+    if (effect === 'fog') {
+      layer.innerHTML =
+        '<div class="blob blob-a"></div><div class="blob blob-b"></div><div class="blob blob-c"></div>';
+    } else if (effect === 'steam') {
+      layer.innerHTML =
+        '<div class="wisp wisp-1"></div><div class="wisp wisp-2"></div><div class="wisp wisp-3"></div>';
+    } else if (effect === 'dust') {
+      const field = document.createElement('div');
+      field.className = 'dust-field';
+      for (let i = 0; i < 24; i++) {
+        const mote = document.createElement('span');
+        mote.className = 'mote';
+        const top = (i % 6) * 16 + 2;
+        const left = (i * 37) % 100;
+        const duration = (18 + i * 1.3).toFixed(1);
+        const delay = (-(i * 0.6)).toFixed(1);
+        mote.style.cssText = `top:${top}%; left:${left}%; animation-duration:${duration}s; animation-delay:${delay}s;`;
+        field.appendChild(mote);
+      }
+      layer.appendChild(field);
+    } else if (effect === 'embers') {
+      const field = document.createElement('div');
+      field.className = 'ember-field';
+      for (let i = 0; i < 14; i++) {
+        const ember = document.createElement('span');
+        ember.className = 'ember';
+        const left = (i * 53) % 100;
+        const duration = (14 + i * 1.1).toFixed(1);
+        const delay = (-(i * 0.9)).toFixed(1);
+        ember.style.cssText = `left:${left}%; animation-duration:${duration}s; animation-delay:${delay}s;`;
+        field.appendChild(ember);
+      }
+      layer.appendChild(field);
+    } else if (effect === 'snow') {
+      const field = document.createElement('div');
+      field.className = 'snow-field';
+      for (let i = 0; i < 30; i++) {
+        const flake = document.createElement('span');
+        flake.className = 'flake';
+        const left = (i * 31) % 100;
+        const size = 2 + (i % 4);
+        const duration = (10 + (i % 7) * 1.6).toFixed(1);
+        const delay = (-(i * 0.7)).toFixed(1);
+        const drift = ((i % 5) - 2) * 3; // vento leve pra cada lado
+        flake.style.cssText = `left:${left}%; width:${size}px; height:${size}px; --drift:${drift}vw; animation-duration:${duration}s; animation-delay:${delay}s;`;
+        field.appendChild(flake);
+      }
+      layer.appendChild(field);
+    }
+    return layer;
+  }
+
+  let currentEffect = null;
+  let currentColor = null;
+
+  function setAmbient(color, effect) {
+    const root = document.getElementById('ambient-root');
+    if (!root) return;
+    if (effect === currentEffect && color === currentColor) return;
+    currentEffect = effect;
+    currentColor = color;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const next = buildAmbientLayer(effect, color);
+
+    if (reduceMotion) {
+      root.innerHTML = '';
+      root.appendChild(next);
+      return;
+    }
+
+    next.style.opacity = '0';
+    root.appendChild(next);
+    // força reflow antes de habilitar a transição
+    void next.offsetWidth;
+    next.style.transition = 'opacity 1.4s ease';
+    next.style.opacity = '';
+
+    const previous = Array.from(root.children).filter((el) => el !== next);
+    previous.forEach((el) => {
+      el.style.transition = 'opacity 1.4s ease';
+      el.style.opacity = '0';
+      window.setTimeout(() => el.remove(), 1500);
+    });
+  }
+
+  window.__setAmbient = setAmbient;
+  setAmbient(initialColor, initialEffect);
+</script>
+
+<style is:global>
+  .ambient-root {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .ambient-layer {
+    position: absolute;
+    inset: 0;
+    opacity: 0.5;
+  }
+
+  /* --- Névoa: manchas grandes e lentas de luz, quase imóveis --- */
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    background: radial-gradient(circle, var(--ambient-color) 0%, transparent 70%);
+    opacity: 0.35;
+    will-change: transform;
+  }
+  .blob-a {
+    width: 46vw;
+    height: 46vw;
+    top: -10%;
+    left: -12%;
+    animation: drift-a 48s ease-in-out infinite;
+  }
+  .blob-b {
+    width: 38vw;
+    height: 38vw;
+    bottom: -14%;
+    right: -8%;
+    animation: drift-b 56s ease-in-out infinite;
+  }
+  .blob-c {
+    width: 28vw;
+    height: 28vw;
+    top: 40%;
+    left: 60%;
+    animation: drift-c 64s ease-in-out infinite;
+  }
+  @keyframes drift-a {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(4vw, 3vh); }
+  }
+  @keyframes drift-b {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-3vw, -4vh); }
+  }
+  @keyframes drift-c {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-2vw, 2vh) scale(1.08); }
+  }
+
+  /* --- Vapor: filetes finos subindo, tipo chá quente --- */
+  .wisp {
+    position: absolute;
+    bottom: -10%;
+    width: 16vw;
+    height: 70vh;
+    background: linear-gradient(to top, var(--ambient-color) 0%, transparent 75%);
+    opacity: 0.28;
+    filter: blur(40px);
+    border-radius: 50%;
+    will-change: transform;
+  }
+  .wisp-1 { left: 8%; animation: rise 22s ease-in-out infinite; }
+  .wisp-2 { left: 45%; animation: rise 28s ease-in-out infinite 4s; }
+  .wisp-3 { left: 75%; animation: rise 25s ease-in-out infinite 8s; }
+  @keyframes rise {
+    0% { transform: translateY(0) translateX(0) scaleY(1); opacity: 0; }
+    15% { opacity: 0.28; }
+    50% { transform: translateY(-25vh) translateX(2vw) scaleY(1.1); }
+    85% { opacity: 0.1; }
+    100% { transform: translateY(-55vh) translateX(-1vw) scaleY(1.2); opacity: 0; }
+  }
+
+  /* --- Poeira: partículas minúsculas flutuando em luz --- */
+  .dust-field {
+    position: absolute;
+    inset: 0;
+  }
+  .mote {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--ambient-color);
+    opacity: 0.4;
+    animation-name: float-dust;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+  @keyframes float-dust {
+    0%, 100% { transform: translate(0, 0); opacity: 0.15; }
+    50% { transform: translate(1.5vw, -4vh); opacity: 0.5; }
+  }
+
+  /* --- Brasas: pontos quentes subindo devagar --- */
+  .ember-field {
+    position: absolute;
+    inset: 0;
+  }
+  .ember {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ambient-color);
+    box-shadow: 0 0 6px 1px var(--ambient-color);
+    opacity: 0.5;
+    bottom: -5%;
+    animation-name: float-ember;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes float-ember {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 0.55; }
+    90% { opacity: 0.2; }
+    100% { transform: translateY(-90vh) translateX(2vw); opacity: 0; }
+  }
+
+  /* --- Neve: flocos caindo devagar, com leve deriva lateral --- */
+  .snow-field {
+    position: absolute;
+    inset: 0;
+  }
+  .flake {
+    position: absolute;
+    top: -5%;
+    border-radius: 50%;
+    background: var(--ambient-color);
+    opacity: 0.6;
+    filter: blur(0.3px);
+    animation-name: snow-fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes snow-fall {
+    0% { transform: translate(0, 0); opacity: 0; }
+    10% { opacity: 0.65; }
+    90% { opacity: 0.4; }
+    100% { transform: translate(var(--drift, 0), 115vh); opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .blob, .wisp, .mote, .ember, .flake {
+      animation: none !important;
+    }
+    .ambient-layer {
+      transition: none !important;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .ambient-layer { opacity: 0.35; }
+  }
+</style>

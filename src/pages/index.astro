@@ -1,0 +1,184 @@
+---
+import '../styles/global.css';
+import LanguageDoor from '../components/LanguageDoor.astro';
+import { languages } from '../i18n/config';
+
+// Leve variação orgânica entre as portas (não é mais profundidade agressiva
+// de perspectiva) — todas ficam legíveis, só com um toque sutil de ondulação.
+const entries = Object.entries(languages);
+
+function waveStyle(i: number) {
+  const lift = i % 2 === 0 ? 0 : 16; // px — alterna leve subida/descida
+  const scale = 1 - (i % 3) * 0.02; // variação mínima de tamanho, quase imperceptível
+  return `transform: translateY(${lift}px) scale(${scale});`;
+}
+---
+
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Uma prévia do livro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Source+Serif+4:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="corridor-body">
+    <main class="corridor">
+      <div class="hallway" aria-hidden="true">
+        <div class="wall wall-left"></div>
+        <div class="wall wall-right"></div>
+        <div class="floor"></div>
+        <div class="vanishing-glow"></div>
+        <div class="dust-mote dust-1"></div>
+        <div class="dust-mote dust-2"></div>
+        <div class="dust-mote dust-3"></div>
+      </div>
+
+      <p class="corridor-hint">
+        Escolha uma porta · Choose a door · Elige una puerta · 扉を選んでください
+      </p>
+
+      <div class="doors-stage">
+        {entries.map(([code, name], i) => (
+          <div class="door-slot" style={waveStyle(i)}>
+            <LanguageDoor code={code} label={name} href={`/${code}/`} number={String(i + 1).padStart(3, '0')} />
+          </div>
+        ))}
+      </div>
+    </main>
+
+    <style>
+      .corridor-body {
+        min-height: 100vh;
+        margin: 0;
+        background: #0b0a0d;
+        color: #cfc6b8;
+        font-family: 'Source Serif 4', Georgia, serif;
+        overflow-x: hidden;
+      }
+
+      .corridor {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 2rem 1rem 4rem;
+      }
+
+      .hallway {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+      }
+
+      .wall {
+        position: absolute;
+        top: 0;
+        bottom: 30%;
+        width: 60%;
+        background: linear-gradient(180deg, #1c1915 0%, #0e0c0a 100%);
+      }
+      .wall-left {
+        left: 0;
+        clip-path: polygon(0 0, 100% 0, 46% 100%, 0 100%);
+        background: linear-gradient(90deg, #201b15 0%, #0e0c0a 100%);
+      }
+      .wall-right {
+        right: 0;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 54% 100%);
+        background: linear-gradient(270deg, #201b15 0%, #0e0c0a 100%);
+      }
+      .floor {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 42%;
+        background:
+          repeating-linear-gradient(
+            180deg,
+            rgba(0, 0, 0, 0.25) 0px,
+            transparent 2px,
+            transparent 40px
+          ),
+          linear-gradient(180deg, #141210 0%, #060505 100%);
+        clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
+      }
+
+      .vanishing-glow {
+        position: absolute;
+        left: 50%;
+        top: 26%;
+        width: 14vw;
+        height: 14vw;
+        max-width: 220px;
+        max-height: 220px;
+        transform: translate(-50%, -50%);
+        background: radial-gradient(circle, rgba(201, 138, 82, 0.35) 0%, rgba(201, 138, 82, 0.08) 45%, transparent 75%);
+        filter: blur(6px);
+        animation: glow-breathe 8s ease-in-out infinite;
+      }
+      @keyframes glow-breathe {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+      }
+
+      .dust-mote {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: #9a9488;
+        opacity: 0.4;
+        filter: blur(0.5px);
+      }
+      .dust-1 { top: 45%; left: 48%; animation: float-dust 16s ease-in-out infinite; }
+      .dust-2 { top: 55%; left: 53%; animation: float-dust 20s ease-in-out infinite 3s; }
+      .dust-3 { top: 38%; left: 44%; animation: float-dust 24s ease-in-out infinite 6s; }
+      @keyframes float-dust {
+        0%, 100% { transform: translate(0, 0); opacity: 0.15; }
+        50% { transform: translate(1vw, -3vh); opacity: 0.5; }
+      }
+
+      .corridor-hint {
+        position: relative;
+        z-index: 10;
+        font-style: italic;
+        font-size: clamp(0.78rem, 1.3vw, 0.92rem);
+        color: rgba(154, 148, 136, 0.85);
+        text-align: center;
+        letter-spacing: 0.01em;
+        max-width: 40rem;
+        margin: 0 0 clamp(1.5rem, 5vh, 3rem);
+      }
+
+      .doors-stage {
+        position: relative;
+        z-index: 5;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-end;
+        gap: clamp(1.5rem, 4vw, 3rem) clamp(1.5rem, 3vw, 2.5rem);
+        max-width: 60rem;
+        padding: 0 1rem;
+      }
+
+      .door-slot {
+        transition: transform 0.3s;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .vanishing-glow, .dust-mote { animation: none; }
+      }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,208 @@
+---
+interface Props {
+  code: string;
+  label: string; // nome do idioma no próprio idioma (ex: "Português", "日本語")
+  href: string;
+  number?: string; // pequeno número gravado na porta (ecoa os "objetos numerados" do texto)
+}
+
+const { code, label, href, number } = Astro.props;
+---
+
+<a href={href} class="door" data-lang={code} aria-label={label}>
+  <span class="door-frame">
+    <span class="door-opening" aria-hidden="true"></span>
+    <span class="door-panel">
+      <span class="door-panel-inset"></span>
+      <span class="door-handle" aria-hidden="true"></span>
+      {number && <span class="door-number">{number}</span>}
+    </span>
+  </span>
+  <span class="door-label">{label}</span>
+</a>
+
+<script>
+  function initDoor(door: HTMLElement) {
+    const href = door.getAttribute('href');
+    if (!href) return;
+    const frame = door.querySelector('.door-frame') as HTMLElement;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    door.addEventListener('click', (e) => {
+      if (door.dataset.opening === 'true') return;
+      e.preventDefault();
+
+      if (reduceMotion) {
+        window.location.href = href;
+        return;
+      }
+
+      door.dataset.opening = 'true';
+      frame.classList.add('is-opening');
+
+      window.setTimeout(() => {
+        window.location.href = href;
+      }, 780);
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('.door').forEach(initDoor);
+</script>
+
+<style>
+  .door {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .door-frame {
+    position: relative;
+    width: clamp(84px, 15vw, 128px);
+    aspect-ratio: 2 / 3.4;
+    border-radius: 50% 50% 6px 6px / 22% 22% 4px 4px;
+    background: linear-gradient(180deg, #3a322a 0%, #221c17 100%);
+    padding: 7px;
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.4),
+      0 14px 30px -10px rgba(0, 0, 0, 0.7),
+      inset 0 0 0 1px rgba(214, 190, 150, 0.06);
+    transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.45s;
+    perspective: 340px;
+    overflow: visible;
+  }
+
+  .door-opening {
+    position: absolute;
+    inset: 7px;
+    border-radius: 50% 50% 4px 4px / 22% 22% 3px 3px;
+    background: radial-gradient(circle at 35% 50%, #ffdca8 0%, #c98a52 35%, rgba(201, 138, 82, 0) 70%);
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity 0.6s ease, transform 0.7s ease;
+    z-index: 0;
+  }
+
+  .door-panel {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50% 50% 4px 4px / 22% 22% 3px 3px;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.12) 0px,
+        transparent 2px,
+        transparent 10px,
+        rgba(0, 0, 0, 0.12) 12px
+      ),
+      linear-gradient(160deg, #7a5a3a 0%, #5c4128 55%, #43301d 100%);
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+    z-index: 1;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transition: transform 0.78s cubic-bezier(0.55, 0.06, 0.68, 0.19), box-shadow 0.78s;
+  }
+
+  .door-frame.is-opening .door-opening {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+
+  .door-frame.is-opening .door-panel {
+    transform: rotateY(-108deg);
+    box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.55), 30px 0 40px -12px rgba(0, 0, 0, 0.6);
+  }
+
+  .door-panel-inset {
+    position: absolute;
+    inset: 14% 16%;
+    border-radius: 50% 50% 4px 4px / 30% 30% 4px 4px;
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+      inset 0 2px 6px rgba(0, 0, 0, 0.4),
+      inset 0 -2px 4px rgba(255, 210, 150, 0.05);
+  }
+
+  .door-handle {
+    position: absolute;
+    right: 12%;
+    top: 52%;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #e8cfa0, #8a6a3a 70%, #5c4128 100%);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+  }
+
+  .door-number {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.05em;
+    color: rgba(207, 198, 184, 0.55);
+  }
+
+  .door-label {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+    color: #a89a86;
+    opacity: 0.85;
+    transition: color 0.3s, opacity 0.5s;
+    text-align: center;
+  }
+
+  .door-frame.is-opening ~ .door-label,
+  .door:has(.is-opening) .door-label {
+    opacity: 0;
+  }
+
+  .door:hover .door-frame,
+  .door:focus-visible .door-frame {
+    transform: translateY(-4px) scale(1.04);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.4),
+      0 20px 40px -12px rgba(0, 0, 0, 0.8),
+      0 0 24px -4px var(--door-glow, rgba(201, 138, 82, 0.4)),
+      inset 0 0 0 1px rgba(214, 190, 150, 0.12);
+  }
+
+  .door:hover .door-panel-inset {
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+      inset 0 2px 6px rgba(0, 0, 0, 0.4),
+      inset 0 -2px 4px rgba(255, 210, 150, 0.05),
+      0 0 20px -2px rgba(255, 214, 150, 0.18);
+  }
+
+  .door:hover .door-label,
+  .door:focus-visible .door-label {
+    color: #f1e9d8;
+    opacity: 1;
+  }
+
+  .door:focus-visible {
+    outline: 2px solid #d6ccba;
+    outline-offset: 4px;
+    border-radius: 8px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .door-frame,
+    .door-panel,
+    .door-opening,
+    .door-label {
+      transition: none;
+    }
+  }
+</style>
