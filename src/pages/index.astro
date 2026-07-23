@@ -92,7 +92,13 @@ const MAIN_TITLE: Record<string, string> = {
           </svg>
         </div>
 
-        <h1 class="hero-title">{MAIN_TITLE.pt}</h1>
+        <h1 class="hero-title" id="hero-title">
+          {Object.entries(languages).map(([code], i) => (
+            <span class="hero-title-word" data-lang={code} style={i === 0 ? 'opacity:1;' : ''}>
+              {MAIN_TITLE[code] ?? MAIN_TITLE.pt}
+            </span>
+          ))}
+        </h1>
       </div>
 
       <p class="corridor-hint">
@@ -225,6 +231,7 @@ const MAIN_TITLE: Record<string, string> = {
       }
 
       .hero-title {
+        position: relative;
         font-family: 'Playfair Display', 'Cinzel', serif;
         font-weight: 600;
         font-size: clamp(2.2rem, 6vw, 3.6rem);
@@ -233,6 +240,16 @@ const MAIN_TITLE: Record<string, string> = {
         margin: 0;
         text-align: center;
         text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6);
+        min-height: 1.3em;
+        min-width: 8ch;
+      }
+
+      .hero-title-word {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 1.2s ease;
+        white-space: nowrap;
       }
 
       .corridor-hint {
@@ -265,7 +282,26 @@ const MAIN_TITLE: Record<string, string> = {
 
       @media (prefers-reduced-motion: reduce) {
         .vanishing-glow, .dust-mote { animation: none; }
+        .hero-title-word { transition: none; }
       }
     </style>
+
+    <script>
+      function initTitleCycle() {
+        const words = Array.from(document.querySelectorAll<HTMLElement>('.hero-title-word'));
+        if (words.length < 2) return;
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduceMotion) return;
+
+        let current = 0;
+        window.setInterval(() => {
+          const next = (current + 1) % words.length;
+          words[current].style.opacity = '0';
+          words[next].style.opacity = '1';
+          current = next;
+        }, 3200);
+      }
+      initTitleCycle();
+    </script>
   </body>
 </html>
