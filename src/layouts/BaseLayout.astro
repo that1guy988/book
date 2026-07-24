@@ -7,12 +7,26 @@ import AmbientBackground from '../components/AmbientBackground.astro';
 interface Props {
   lang: Lang;
   title: string;
+  description?: string;
   ambientColor?: string;
   ambientEffect?: 'fog' | 'steam' | 'dust' | 'embers' | 'snow' | 'none';
 }
 
-const { lang, title, ambientColor = '#7a2e2e', ambientEffect = 'none' } = Astro.props;
+const DEFAULT_DESCRIPTION: Record<string, string> = {
+  pt: 'Uma prévia do livro — leia os primeiros capítulos em 8 idiomas, num corredor de salas onde cada uma tem seu próprio clima.',
+  en: 'A preview of the book — read the first chapters in 8 languages, through a corridor of rooms each with its own atmosphere.',
+  es: 'Una vista previa del libro — lee los primeros capítulos en 8 idiomas, en un corredor de salas con su propia atmósfera.',
+  fr: 'Un aperçu du livre — lisez les premiers chapitres en 8 langues, à travers un couloir de salles à l\'atmosphère propre.',
+  ja: '本の試し読み — 8つの言語で、それぞれ独自の雰囲気を持つ部屋が並ぶ廊下を通って最初の章を読む。',
+  zh: '本书试读 — 用8种语言阅读前几章，穿过一条走廊,每个房间都有自己的氛围。',
+  uk: 'Попередній перегляд книги — прочитайте перші розділи 8 мовами, у коридорі кімнат із власною атмосферою.',
+  ru: 'Предпросмотр книги — прочитайте первые главы на 8 языках, в коридоре комнат с собственной атмосферой.',
+};
+
+const { lang, title, description, ambientColor = '#7a2e2e', ambientEffect = 'none' } = Astro.props;
 const t = useTranslations(lang);
+const pageDescription = description ?? DEFAULT_DESCRIPTION[lang] ?? DEFAULT_DESCRIPTION.pt;
+const ogImageUrl = new URL('/og-image.png', Astro.site ?? Astro.url).toString();
 ---
 
 <!doctype html>
@@ -21,6 +35,19 @@ const t = useTranslations(lang);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="/favicon.ico" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:locale" content={lang} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={pageDescription} />
+    <meta name="twitter:image" content={ogImageUrl} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -34,6 +61,9 @@ const t = useTranslations(lang);
       <nav class="max-w-3xl mx-auto flex items-center justify-between px-6 py-4">
         <a href={`/${lang}/`} class="text-lg tracking-wide">{t('nav.home')}</a>
         <div class="flex items-center gap-4">
+          <a href="/?stay" class="text-sm text-stone-400 hover:text-stone-100 transition-colors" title="Ver o corredor de portas">
+            🚪
+          </a>
           <a href={`/${lang}/salas/`} class="text-sm text-stone-400 hover:text-stone-100 transition-colors">
             {t('nav.rooms')}
           </a>

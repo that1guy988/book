@@ -61,6 +61,7 @@ for (const p of rawParagraphs) {
     <h1 class="text-3xl mt-4 mb-8 tracking-wide">{entry.data.title}</h1>
 
     <BookReader
+      storageKey={`${slug}:${lang}`}
       title={entry.data.title}
       paragraphs={paragraphs}
       themeMarkers={themeMarkers}

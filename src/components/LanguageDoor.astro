@@ -27,10 +27,17 @@ const { code, label, href, number } = Astro.props;
     if (!href) return;
     const frame = door.querySelector('.door-frame') as HTMLElement;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lang = door.dataset.lang;
 
     door.addEventListener('click', (e) => {
       if (door.dataset.opening === 'true') return;
       e.preventDefault();
+
+      try {
+        if (lang) localStorage.setItem('preferred-lang', lang);
+      } catch {
+        // localStorage indisponível (modo privado etc.) — segue sem lembrar
+      }
 
       if (reduceMotion) {
         window.location.href = href;

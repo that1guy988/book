@@ -288,14 +288,25 @@ const showKanjiSubtitle = cover.subtitle === '霧' && lang !== 'ja';
   }
 </style>
 
-<script>
+<script define:vars={{ roomSlug: slug }}>
   function initCover() {
     const cover = document.getElementById('chapter-cover');
     const openBtn = document.getElementById('cover-open');
-    const reader = document.querySelector('.book-wrap-container') as HTMLElement | null;
+    const reader = document.querySelector('.book-wrap-container');
+
+    function markVisited() {
+      try {
+        const visited = new Set(JSON.parse(localStorage.getItem('visited-rooms') || '[]'));
+        visited.add(roomSlug);
+        localStorage.setItem('visited-rooms', JSON.stringify(Array.from(visited)));
+      } catch {
+        // localStorage indisponível — segue sem lembrar
+      }
+    }
 
     function openCover() {
       if (!cover) return;
+      markVisited();
       cover.classList.add('cover-closing');
       window.setTimeout(() => {
         cover.style.display = 'none';

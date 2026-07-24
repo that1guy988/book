@@ -11,8 +11,9 @@ interface Props {
   themeMarkers?: ThemeMarker[]; // trocas de clima de fundo embutidas no texto
   baseAmbientColor?: string;
   baseAmbientEffect?: string;
-  pageTheme?: 'default' | 'frost' | 'watercolor' | 'mist'; // paleta da própria página do leitor
+  pageTheme?: 'default' | 'frost' | 'watercolor' | 'mist' | 'matcha' | 'cafeteria' | 'void'; // paleta da própria página do leitor
   pigmentPalette?: string[]; // cores usadas nas partículas/sangramento do tema watercolor
+  storageKey?: string; // identifica a sala+idioma pra lembrar a página lida
   prevLabel: string;
   nextLabel: string;
   ofLabel: string; // ex: "de" -> "Página 3 de 12"
@@ -26,13 +27,21 @@ const {
   baseAmbientEffect = 'none',
   pageTheme = 'default',
   pigmentPalette = ['#5b7fb5', '#c1607a', '#8a5fb0', '#5fa87e'],
+  storageKey,
   prevLabel,
   nextLabel,
   ofLabel,
 } = Astro.props;
 ---
 
-<div class="book-wrap" data-title={title} data-of-label={ofLabel} data-theme={pageTheme} style={`--room-glow: ${baseAmbientColor};`}>
+<div
+  class="book-wrap"
+  data-title={title}
+  data-of-label={ofLabel}
+  data-theme={pageTheme}
+  data-storage-key={storageKey}
+  style={`--room-glow: ${baseAmbientColor};`}
+>
   <div class="book" id="book">
     <div class="book-spine" aria-hidden="true"></div>
 
@@ -873,6 +882,7 @@ const {
     const title = root.dataset.title ?? '';
     const ofLabel = root.dataset.ofLabel ?? 'of';
     const pageTheme = root.dataset.theme ?? 'default';
+    const storageKey = root.dataset.storageKey ?? '';
     if (!dataEl) return;
 
     let paragraphs: string[] = [];
@@ -1160,6 +1170,13 @@ const {
         setAmbient?.(tint, baseAmbient.effect);
       }
       restartVoidAnimations();
+      if (storageKey) {
+        try {
+          localStorage.setItem(`reading:${storageKey}`, String(i));
+        } catch {
+          // localStorage indisponível — segue sem lembrar
+        }
+      }
     }
 
     function goNext() {
@@ -1228,17 +1245,57 @@ const {
     prevBtn.addEventListener('click', goPrev);
     tapNext.addEventListener('click', goNext);
     tapPrev.addEventListener('click', goPrev);
+
+    // Gestos de swipe (celular): arrasta pra esquerda avança, pra direita volta.
+    let touchStartX = 0;
+    let touchStartY = 0;
+    book.addEventListener(
+      'touchstart',
+      (e) => {
+        const touch = e.touches[0];
+        if (!touch) return;
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+      },
+      { passive: true }
+    );
+    book.addEventListener(
+      'touchend',
+      (e) => {
+        const touch = e.changedTouches[0];
+        if (!touch) return;
+        const dx = touch.clientX - touchStartX;
+        const dy = touch.clientY - touchStartY;
+        // ignora se o movimento foi mais vertical que horizontal (provável scroll)
+        if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+        if (dx < 0) goNext();
+        else goPrev();
+      },
+      { passive: true }
+    );
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight') goNext();
       if (e.key === 'ArrowLeft') goPrev();
     });
 
+    let isFirstSetup = true;
     function setup() {
       pages = paginate();
       computePageStarts();
       index = 0;
-      showPage(0);
-      paintPage(leafFront, pages[0] ?? [], true);
+      if (isFirstSetup && storageKey) {
+        try {
+          const saved = parseInt(localStorage.getItem(`reading:${storageKey}`) || '0', 10);
+          if (Number.isFinite(saved) && saved > 0 && saved < pages.length) {
+            index = saved;
+          }
+        } catch {
+          // localStorage indisponível — começa do início
+        }
+      }
+      isFirstSetup = false;
+      showPage(index);
+      paintPage(leafFront, pages[index] ?? [], index === 0);
     }
 
     setup();

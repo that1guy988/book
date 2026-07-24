@@ -19,20 +19,50 @@ const salas = allSalas
 ---
 
 <BaseLayout lang={lang} title={t('rooms.title')}>
-  <h1 class="text-3xl mb-8 tracking-wide">{t('rooms.title')}</h1>
-  <ul class="space-y-4">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-3xl tracking-wide">{t('rooms.title')}</h1>
+    <span id="rooms-progress" class="text-sm text-stone-400"></span>
+  </div>
+  <ul class="space-y-4" id="rooms-list">
     {salas.map((sala) => {
       const slug = sala.id.split('/')[0];
       return (
         <li>
           <a
             href={`/${lang}/salas/${slug}/`}
-            class="block p-4 border border-stone-800 rounded hover:border-stone-600 transition-colors"
+            class="flex items-center justify-between gap-3 p-4 border border-stone-800 rounded hover:border-stone-600 transition-colors"
+            data-room-slug={slug}
           >
             <span class="text-lg">{sala.data.title}</span>
+            <span class="room-visited-check text-stone-500 text-sm" hidden>✓</span>
           </a>
         </li>
       );
     })}
   </ul>
 </BaseLayout>
+
+<script define:vars={{ visitedLabel: t('rooms.visited'), totalRooms: salas.length }}>
+  try {
+    const visited = new Set(JSON.parse(localStorage.getItem('visited-rooms') || '[]'));
+    document.querySelectorAll('[data-room-slug]').forEach((el) => {
+      const slug = el.getAttribute('data-room-slug');
+      if (slug && visited.has(slug)) {
+        const check = el.querySelector('.room-visited-check');
+        check?.removeAttribute('hidden');
+        el.classList.add('border-stone-600');
+      }
+    });
+    const progressEl = document.getElementById('rooms-progress');
+    if (progressEl) {
+      // conta só as salas visitadas que existem nesta listagem
+      const visibleSlugs = Array.from(document.querySelectorAll('[data-room-slug]')).map((el) =>
+        el.getAttribute('data-room-slug')
+      );
+      const visitedCount = visibleSlugs.filter((s) => s && visited.has(s)).length;
+      progressEl.textContent = `${visitedCount} / ${totalRooms} ${visitedLabel}`;
+    }
+  } catch {
+    // localStorage indisponível — sem indicador de progresso
+  }
+</script>

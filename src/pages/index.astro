@@ -31,7 +31,25 @@ const MAIN_TITLE: Record<string, string> = {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Uma prévia do livro</title>
+    <title>As Salas — uma prévia do livro</title>
+    <meta
+      name="description"
+      content="Uma prévia do livro — leia os primeiros capítulos em 8 idiomas, num corredor de salas onde cada uma tem seu próprio clima."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="/favicon.ico" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="As Salas — uma prévia do livro" />
+    <meta
+      property="og:description"
+      content="Leia os primeiros capítulos em 8 idiomas, num corredor de salas onde cada uma tem seu próprio clima."
+    />
+    <meta property="og:image" content={new URL('/og-image.png', Astro.site ?? Astro.url).toString()} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="As Salas — uma prévia do livro" />
+    <meta name="twitter:image" content={new URL('/og-image.png', Astro.site ?? Astro.url).toString()} />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -287,6 +305,22 @@ const MAIN_TITLE: Record<string, string> = {
     </style>
 
     <script>
+      // Se a pessoa já escolheu um idioma antes, pula direto pra ele.
+      // Acessar com "?stay" força mostrar o corredor de novo (ex: link "Corredor" no cabeçalho).
+      function redirectToRememberedLang() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('stay')) return;
+        try {
+          const remembered = localStorage.getItem('preferred-lang');
+          if (remembered) {
+            window.location.replace(`/${remembered}/`);
+          }
+        } catch {
+          // localStorage indisponível — mostra o corredor normalmente
+        }
+      }
+      redirectToRememberedLang();
+
       function initTitleCycle() {
         const words = Array.from(document.querySelectorAll<HTMLElement>('.hero-title-word'));
         if (words.length < 2) return;

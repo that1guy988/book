@@ -4,6 +4,7 @@ import type { Lang } from './config';
 export const ui: Record<Lang, Record<string, string>> = {
   pt: {
     'cover.open': 'Entrar',
+    'rooms.visited': 'salas visitadas',
     'nav.home': 'Início',
     'nav.rooms': 'Salas',
     'home.title': 'Uma prévia do livro',
@@ -17,6 +18,7 @@ export const ui: Record<Lang, Record<string, string>> = {
   },
   en: {
     'cover.open': 'Enter',
+    'rooms.visited': 'rooms visited',
     'nav.home': 'Home',
     'nav.rooms': 'Rooms',
     'home.title': 'A preview of the book',
@@ -30,6 +32,7 @@ export const ui: Record<Lang, Record<string, string>> = {
   },
   es: {
     'cover.open': 'Entrar',
+    'rooms.visited': 'salas visitadas',
     'nav.home': 'Inicio',
     'nav.rooms': 'Salas',
     'home.title': 'Una vista previa del libro',
@@ -43,6 +46,7 @@ export const ui: Record<Lang, Record<string, string>> = {
   },
   fr: {
     'cover.open': 'Entrer',
+    'rooms.visited': 'salles visitées',
     'nav.home': 'Accueil',
     'nav.rooms': 'Salles',
     'home.title': 'Un aperçu du livre',
@@ -56,6 +60,7 @@ export const ui: Record<Lang, Record<string, string>> = {
   },
   ja: {
     'cover.open': '入る',
+    'rooms.visited': '訪れた部屋',
     'nav.home': 'ホーム',
     'nav.rooms': '部屋',
     'home.title': '本の試し読み',
@@ -69,6 +74,7 @@ export const ui: Record<Lang, Record<string, string>> = {
   },
   uk: {
     'cover.open': 'Увійти',
+    'rooms.visited': 'відвіданих кімнат',
     'nav.home': 'Головна',
     'nav.rooms': 'Кімнати',
     'home.title': 'Попередній перегляд книги',
@@ -82,6 +88,7 @@ export const ui: Record<Lang, Record<string, string>> = {
   },
   ru: {
     'cover.open': 'Войти',
+    'rooms.visited': 'посещённых комнат',
     'nav.home': 'Главная',
     'nav.rooms': 'Комнаты',
     'home.title': 'Предпросмотр книги',
@@ -95,6 +102,7 @@ export const ui: Record<Lang, Record<string, string>> = {
   },
   zh: {
     'cover.open': '进入',
+    'rooms.visited': '个房间已访问',
     'nav.home': '首页',
     'nav.rooms': '房间',
     'home.title': '本书试读',
