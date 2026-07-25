@@ -2,7 +2,7 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { languages, type Lang } from '../../../i18n/config';
 import { useTranslations } from '../../../i18n/ui';
-import { getRoomTitle } from '../../../i18n/roomTitles';
+import { getRoomTitle, getRoomFont } from '../../../i18n/roomTitles';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -35,7 +35,7 @@ const salas = allSalas
             style={`--room-accent: ${sala.data.ambientColor};`}
             data-room-slug={slug}
           >
-            <span class="text-lg">
+            <span class="text-lg room-link-title" style={`font-family: ${getRoomFont(slug)};`}>
               {slug === 'introducao' ? sala.data.title : `${sala.data.title} — ${getRoomTitle(slug, lang)}`}
             </span>
             <span class="room-visited-check text-stone-500 text-sm" hidden>✓</span>
@@ -62,6 +62,13 @@ const salas = allSalas
   }
   .room-link.visited {
     border-left-color: var(--room-accent);
+  }
+  .room-link-title {
+    letter-spacing: 0.02em;
+    transition: color 0.3s ease;
+  }
+  .room-link:hover .room-link-title {
+    color: var(--room-accent);
   }
 </style>
 

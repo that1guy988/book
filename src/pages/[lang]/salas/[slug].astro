@@ -4,7 +4,7 @@ import BookReader from '../../../components/BookReader.astro';
 import ChapterCover from '../../../components/ChapterCover.astro';
 import { languages, type Lang } from '../../../i18n/config';
 import { useTranslations } from '../../../i18n/ui';
-import { getRoomTitle } from '../../../i18n/roomTitles';
+import { getRoomTitle, getRoomFont } from '../../../i18n/roomTitles';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -65,7 +65,7 @@ for (const p of rawParagraphs) {
     <a href={`/${lang}/salas/`} class="text-sm text-stone-400 hover:text-stone-100 transition-colors">
       ← {t('rooms.back')}
     </a>
-    <h1 class="text-3xl mt-4 mb-8 tracking-wide">{fullTitle}</h1>
+    <h1 class="text-3xl mt-4 mb-8 tracking-wide" style={`font-family: ${getRoomFont(slug)};`}>{fullTitle}</h1>
 
     <BookReader
       storageKey={`${slug}:${lang}`}

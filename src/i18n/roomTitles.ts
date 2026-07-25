@@ -35,3 +35,19 @@ export const ROOM_TITLES: Record<string, Record<string, string>> = {
 export function getRoomTitle(slug: string, lang: string): string {
   return ROOM_TITLES[slug]?.[lang] ?? ROOM_TITLES.introducao[lang] ?? ROOM_TITLES.introducao.pt;
 }
+
+// Mesma fonte usada na capa de cada sala — reaproveitada no cabeçalho da
+// leitura e na listagem, pra identidade visual ficar consistente em todo lugar.
+export const ROOM_FONTS: Record<string, string> = {
+  neve: "'Cormorant Garamond', serif",
+  artista: "'Marck Script', cursive",
+  nevoa: "'Cormorant Garamond', serif",
+  matcha: "'ZCOOL XiaoWei', serif",
+  cafeteria: "'Patrick Hand', cursive",
+  'minha-sala': "'Fraunces', serif",
+  introducao: "'Fraunces', serif",
+};
+
+export function getRoomFont(slug: string): string {
+  return ROOM_FONTS[slug] ?? ROOM_FONTS.introducao;
+}

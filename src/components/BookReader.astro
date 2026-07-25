@@ -249,6 +249,17 @@ const {
   }
 
   .book-wrap[data-theme='frost'] .page-inner {
+    font-family: 'Cormorant Garamond', 'Source Serif 4', serif;
+    font-size: calc(var(--reader-font-size, 1rem) * 1.08);
+    letter-spacing: 0.012em;
+    line-height: 1.85;
+  }
+  .book-wrap[data-theme='frost'] .page-inner p.first-para::first-letter {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+  }
+
+  .book-wrap[data-theme='frost'] .page-inner {
     filter: grayscale(20%) brightness(105%) contrast(90%);
   }
 
@@ -319,6 +330,15 @@ const {
     --accent: #b0577a;
   }
 
+  .book-wrap[data-theme='watercolor'] .page-inner {
+    letter-spacing: 0.015em;
+    line-height: 1.85;
+  }
+  .book-wrap[data-theme='watercolor'] .page-inner p.first-para::first-letter {
+    font-family: 'Marck Script', cursive;
+    font-size: 2.4em;
+  }
+
   /* mancha de tinta que reage ao ponteiro/toque, atrás do texto */
   .ink-stain {
     position: absolute;
@@ -386,6 +406,18 @@ const {
     --ink: #3a4250;
     --ink-soft: #6b7686;
     --accent: #7d93b8;
+  }
+
+  .book-wrap[data-theme='mist'] .page-inner {
+    font-family: 'Cormorant Garamond', 'Source Serif 4', serif;
+    font-weight: 300;
+    font-size: calc(var(--reader-font-size, 1rem) * 1.12);
+    letter-spacing: 0.02em;
+    line-height: 1.95;
+  }
+  .book-wrap[data-theme='mist'] .page-inner p.first-para::first-letter {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
   }
 
   /* 2. Luz das portas: bordas do livro pulsam com a cor da sala */
@@ -520,6 +552,14 @@ const {
     --accent: #6f8f5c;
   }
 
+  .book-wrap[data-theme='matcha'] .page-inner {
+    letter-spacing: -0.005em;
+    line-height: 1.6;
+  }
+  .book-wrap[data-theme='matcha'] .page-inner p.first-para::first-letter {
+    font-family: 'ZCOOL XiaoWei', serif;
+  }
+
   /* 1. Subsurface scattering simulado: luz que parece vir de dentro da página */
   .book-wrap[data-theme='matcha'] .page,
   .book-wrap[data-theme='matcha'] .page-face {
@@ -643,6 +683,15 @@ const {
     --accent: #8a7a63;
   }
 
+  .book-wrap[data-theme='cafeteria'] .page-inner {
+    letter-spacing: 0.01em;
+    line-height: 1.8;
+  }
+  .book-wrap[data-theme='cafeteria'] .page-inner p.first-para::first-letter {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 2.6em;
+  }
+
   /* 2. Sombra difusa colorida: aura que alterna entre as cores das pessoas do café */
   .book-wrap[data-theme='cafeteria'] .book {
     animation: cafeteria-aura 16s ease-in-out infinite;
@@ -706,6 +755,15 @@ const {
     --ink: #38352f;
     --ink-soft: #6b665c;
     --accent: #7d7871;
+  }
+
+  .book-wrap[data-theme='void'] .page-inner {
+    letter-spacing: 0.008em;
+    line-height: 1.7;
+  }
+  .book-wrap[data-theme='void'] .page-inner p.first-para::first-letter {
+    font-weight: 400;
+    opacity: 0.85;
   }
 
   /* 2. Respirar do vazio: o container do texto pulsa devagar, como algo vivo */
