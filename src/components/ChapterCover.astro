@@ -1,4 +1,6 @@
 ---
+import { getRoomTitle } from '../i18n/roomTitles';
+
 interface Props {
   slug: string;
   lang: string;
@@ -8,40 +10,8 @@ interface Props {
 
 const { slug, lang, chapterLabel, openLabel } = Astro.props;
 
-// Título estilizado de cada sala, traduzido por idioma de leitura.
-const TITLES: Record<string, Record<string, string>> = {
-  neve: {
-    pt: 'Neve', en: 'Snow', es: 'Nieve', fr: 'Neige',
-    ja: '雪', zh: '雪', uk: 'Сніг', ru: 'Снег',
-  },
-  artista: {
-    pt: 'Cores', en: 'Colors', es: 'Colores', fr: 'Couleurs',
-    ja: '色彩', zh: '色彩', uk: 'Кольори', ru: 'Цвета',
-  },
-  nevoa: {
-    pt: 'Névoa', en: 'Mist', es: 'Niebla', fr: 'Brume',
-    ja: '霧', zh: '迷雾', uk: 'Туман', ru: 'Туман',
-  },
-  matcha: {
-    pt: 'Matcha', en: 'Matcha', es: 'Matcha', fr: 'Matcha',
-    ja: '抹茶', zh: '抹茶', uk: 'Матча', ru: 'Матча',
-  },
-  cafeteria: {
-    pt: 'Café', en: 'Coffee', es: 'Café', fr: 'Café',
-    ja: 'コーヒー', zh: '咖啡', uk: 'Кава', ru: 'Кофе',
-  },
-  'minha-sala': {
-    pt: 'Minha Sala', en: 'My Room', es: 'Mi Sala', fr: 'Ma Salle',
-    ja: '私の部屋', zh: '我的房间', uk: 'Моя кімната', ru: 'Моя комната',
-  },
-  introducao: {
-    pt: 'Introdução', en: 'Introduction', es: 'Introducción', fr: 'Introduction',
-    ja: '序章', zh: '序言', uk: 'Вступ', ru: 'Введение',
-  },
-};
-
 // Configuração de identidade visual por sala: fonte, legenda cultural e paleta.
-// O título em si vem de TITLES (acima), traduzido por idioma.
+// O título em si vem de src/i18n/roomTitles.ts (compartilhado com a página de leitura).
 const COVERS: Record<
   string,
   { subtitle?: string; font: string; palette: { bg: string; ink: string; accent: string } }
@@ -79,7 +49,7 @@ const COVERS: Record<
 };
 
 const cover = COVERS[slug] ?? COVERS.introducao;
-const coverTitle = TITLES[slug]?.[lang] ?? TITLES.introducao[lang] ?? TITLES.introducao.pt;
+const coverTitle = getRoomTitle(slug, lang);
 // Para a sala da névoa, o kanji "霧" já serve de título em japonês — não repete como subtítulo.
 const showKanjiSubtitle = cover.subtitle === '霧' && lang !== 'ja';
 ---

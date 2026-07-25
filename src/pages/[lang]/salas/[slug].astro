@@ -4,6 +4,7 @@ import BookReader from '../../../components/BookReader.astro';
 import ChapterCover from '../../../components/ChapterCover.astro';
 import { languages, type Lang } from '../../../i18n/config';
 import { useTranslations } from '../../../i18n/ui';
+import { getRoomTitle } from '../../../i18n/roomTitles';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -20,6 +21,12 @@ export async function getStaticPaths() {
 const { lang, slug } = Astro.params as { lang: Lang; slug: string };
 const { entry } = Astro.props;
 const t = useTranslations(lang);
+
+// "Capítulo N — Nome da Sala": combina o número (traduzido no frontmatter)
+// com o nome estilizado que já aparece na capa, pra não ficar só o número solto.
+// A Introdução não tem número separado do nome, então não duplica.
+const roomName = getRoomTitle(slug, lang);
+const fullTitle = slug === 'introducao' ? entry.data.title : `${entry.data.title} — ${roomName}`;
 
 // Divide o corpo em markdown bruto em parágrafos (separados por linha em branco),
 // removendo comentários de rascunho e normalizando espaços.
@@ -48,7 +55,7 @@ for (const p of rawParagraphs) {
 
 <BaseLayout
   lang={lang}
-  title={entry.data.title}
+  title={fullTitle}
   ambientColor={entry.data.ambientColor}
   ambientEffect={entry.data.ambientEffect}
 >
@@ -58,11 +65,11 @@ for (const p of rawParagraphs) {
     <a href={`/${lang}/salas/`} class="text-sm text-stone-400 hover:text-stone-100 transition-colors">
       ← {t('rooms.back')}
     </a>
-    <h1 class="text-3xl mt-4 mb-8 tracking-wide">{entry.data.title}</h1>
+    <h1 class="text-3xl mt-4 mb-8 tracking-wide">{fullTitle}</h1>
 
     <BookReader
       storageKey={`${slug}:${lang}`}
-      title={entry.data.title}
+      title={fullTitle}
       paragraphs={paragraphs}
       themeMarkers={themeMarkers}
       baseAmbientColor={entry.data.ambientColor}

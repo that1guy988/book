@@ -2,6 +2,7 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { languages, type Lang } from '../../../i18n/config';
 import { useTranslations } from '../../../i18n/ui';
+import { getRoomTitle } from '../../../i18n/roomTitles';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -34,7 +35,9 @@ const salas = allSalas
             style={`--room-accent: ${sala.data.ambientColor};`}
             data-room-slug={slug}
           >
-            <span class="text-lg">{sala.data.title}</span>
+            <span class="text-lg">
+              {slug === 'introducao' ? sala.data.title : `${sala.data.title} — ${getRoomTitle(slug, lang)}`}
+            </span>
             <span class="room-visited-check text-stone-500 text-sm" hidden>✓</span>
           </a>
         </li>
