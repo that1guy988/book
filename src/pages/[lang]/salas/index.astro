@@ -30,7 +30,8 @@ const salas = allSalas
         <li>
           <a
             href={`/${lang}/salas/${slug}/`}
-            class="flex items-center justify-between gap-3 p-4 border border-stone-800 rounded hover:border-stone-600 transition-colors"
+            class="room-link flex items-center justify-between gap-3 p-4 rounded transition-all"
+            style={`--room-accent: ${sala.data.ambientColor};`}
             data-room-slug={slug}
           >
             <span class="text-lg">{sala.data.title}</span>
@@ -42,6 +43,25 @@ const salas = allSalas
   </ul>
 </BaseLayout>
 
+<style>
+  .room-link {
+    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 3px solid color-mix(in srgb, var(--room-accent) 55%, transparent);
+  }
+  .room-link:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    border-left-color: var(--room-accent);
+    background: rgba(255, 255, 255, 0.04);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px -8px color-mix(in srgb, var(--room-accent) 40%, transparent);
+  }
+  .room-link.visited {
+    border-left-color: var(--room-accent);
+  }
+</style>
+
 <script define:vars={{ visitedLabel: t('rooms.visited'), totalRooms: salas.length }}>
   try {
     const visited = new Set(JSON.parse(localStorage.getItem('visited-rooms') || '[]'));
@@ -50,7 +70,7 @@ const salas = allSalas
       if (slug && visited.has(slug)) {
         const check = el.querySelector('.room-visited-check');
         check?.removeAttribute('hidden');
-        el.classList.add('border-stone-600');
+        el.classList.add('visited');
       }
     });
     const progressEl = document.getElementById('rooms-progress');
