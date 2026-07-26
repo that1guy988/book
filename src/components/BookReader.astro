@@ -87,6 +87,38 @@ const {
           ></span>
         ))}
       </div>
+      <div class="page-ambient" aria-hidden="true" style={`--amb-color: ${baseAmbientColor};`}>
+        {baseAmbientEffect === 'dust' && Array.from({ length: 16 }).map((_, i) => (
+          <span
+            class="amb-dust-mote"
+            style={`left:${(i * 43) % 100}%; top:${(i * 31) % 100}%; animation-duration:${(14 + (i % 5) * 1.6).toFixed(1)}s; animation-delay:${(-(i * 0.7)).toFixed(1)}s;`}
+          ></span>
+        ))}
+        {baseAmbientEffect === 'embers' && Array.from({ length: 10 }).map((_, i) => (
+          <span
+            class="amb-ember"
+            style={`left:${(i * 37) % 100}%; animation-duration:${(10 + (i % 4) * 1.3).toFixed(1)}s; animation-delay:${(-(i * 0.9)).toFixed(1)}s;`}
+          ></span>
+        ))}
+        {baseAmbientEffect === 'fog' && (
+          <>
+            <span class="amb-fog-blob" style="width:60%; height:60%; left:-10%; top:-10%; animation-duration:34s;"></span>
+            <span class="amb-fog-blob" style="width:50%; height:50%; right:-10%; bottom:-10%; animation-duration:40s; animation-delay:-8s;"></span>
+          </>
+        )}
+        {baseAmbientEffect === 'steam' && (
+          <>
+            <span class="amb-steam-wisp" style="left:20%; animation-duration:16s;"></span>
+            <span class="amb-steam-wisp" style="left:65%; animation-duration:19s; animation-delay:-6s;"></span>
+          </>
+        )}
+        {baseAmbientEffect === 'snow' && Array.from({ length: 14 }).map((_, i) => (
+          <span
+            class="amb-snow-flake"
+            style={`left:${(i * 47) % 100}%; animation-duration:${(12 + (i % 5) * 1.5).toFixed(1)}s; animation-delay:${(-(i * 0.8)).toFixed(1)}s;`}
+          ></span>
+        ))}
+      </div>
       <div class="page-inner"></div>
       <div class="summer-light" aria-hidden="true"></div>
       <div class="invisible-door" aria-hidden="true"></div>
@@ -1025,6 +1057,116 @@ const {
   }
   .book-wrap[data-comfort='dark'] .page-inner p.first-para::first-letter {
     color: #c9a876 !important;
+  }
+
+  /* ============ Ambiente genérico dentro da página (todas as salas, exceto
+     as que já têm sistema próprio: frost=neve, matcha=poeira de chá) ============ */
+  .page-ambient {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .book-wrap[data-theme='frost'] .page-ambient,
+  .book-wrap[data-theme='matcha'] .page-ambient {
+    display: none;
+  }
+
+  .amb-dust-mote {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--amb-color);
+    opacity: 0.3;
+    animation-name: amb-dust-float;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+  @keyframes amb-dust-float {
+    0%, 100% { transform: translate(0, 0); opacity: 0.15; }
+    50% { transform: translate(1.2vw, -3vh); opacity: 0.4; }
+  }
+
+  .amb-ember {
+    position: absolute;
+    bottom: -4%;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--amb-color);
+    box-shadow: 0 0 6px 1px var(--amb-color);
+    opacity: 0.4;
+    animation-name: amb-ember-rise;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes amb-ember-rise {
+    0% { transform: translateY(0); opacity: 0; }
+    12% { opacity: 0.45; }
+    88% { opacity: 0.2; }
+    100% { transform: translateY(-104%); opacity: 0; }
+  }
+
+  .amb-fog-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(30px);
+    background: radial-gradient(circle, var(--amb-color) 0%, transparent 72%);
+    opacity: 0.28;
+    animation-name: amb-fog-drift;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+  @keyframes amb-fog-drift {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(3%, 2%); }
+  }
+
+  .amb-steam-wisp {
+    position: absolute;
+    bottom: -8%;
+    width: 30%;
+    height: 55%;
+    background: linear-gradient(to top, var(--amb-color) 0%, transparent 75%);
+    opacity: 0.22;
+    filter: blur(18px);
+    border-radius: 50%;
+    animation-name: amb-steam-rise;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+  @keyframes amb-steam-rise {
+    0% { transform: translateY(0) scaleY(1); opacity: 0; }
+    20% { opacity: 0.22; }
+    60% { transform: translateY(-30%) scaleY(1.1); }
+    100% { transform: translateY(-60%) scaleY(1.2); opacity: 0; }
+  }
+
+  .amb-snow-flake {
+    position: absolute;
+    top: -6%;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--amb-color);
+    opacity: 0.5;
+    animation-name: amb-snow-fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes amb-snow-fall {
+    0% { transform: translateY(0); opacity: 0; }
+    12% { opacity: 0.5; }
+    88% { opacity: 0.3; }
+    100% { transform: translateY(112%); opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .amb-dust-mote, .amb-ember, .amb-fog-blob, .amb-steam-wisp, .amb-snow-flake {
+      animation: none !important;
+    }
   }
 </style>
 

@@ -122,16 +122,16 @@ const { color, effect } = Astro.props;
   .ambient-layer {
     position: absolute;
     inset: 0;
-    opacity: 0.5;
+    opacity: 0.8;
   }
 
   /* --- Névoa: manchas grandes e lentas de luz, quase imóveis --- */
   .blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
+    filter: blur(64px);
     background: radial-gradient(circle, var(--ambient-color) 0%, transparent 70%);
-    opacity: 0.35;
+    opacity: 0.55;
     will-change: transform;
   }
   .blob-a {
@@ -175,7 +175,7 @@ const { color, effect } = Astro.props;
     width: 16vw;
     height: 70vh;
     background: linear-gradient(to top, var(--ambient-color) 0%, transparent 75%);
-    opacity: 0.28;
+    opacity: 0.45;
     filter: blur(40px);
     border-radius: 50%;
     will-change: transform;
@@ -198,18 +198,18 @@ const { color, effect } = Astro.props;
   }
   .mote {
     position: absolute;
-    width: 3px;
-    height: 3px;
+    width: 4px;
+    height: 4px;
     border-radius: 50%;
     background: var(--ambient-color);
-    opacity: 0.4;
+    opacity: 0.65;
     animation-name: float-dust;
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
   }
   @keyframes float-dust {
-    0%, 100% { transform: translate(0, 0); opacity: 0.15; }
-    50% { transform: translate(1.5vw, -4vh); opacity: 0.5; }
+    0%, 100% { transform: translate(0, 0); opacity: 0.3; }
+    50% { transform: translate(1.5vw, -4vh); opacity: 0.8; }
   }
 
   /* --- Brasas: pontos quentes subindo devagar --- */
@@ -219,12 +219,12 @@ const { color, effect } = Astro.props;
   }
   .ember {
     position: absolute;
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: var(--ambient-color);
-    box-shadow: 0 0 6px 1px var(--ambient-color);
-    opacity: 0.5;
+    box-shadow: 0 0 9px 2px var(--ambient-color);
+    opacity: 0.75;
     bottom: -5%;
     animation-name: float-ember;
     animation-timing-function: linear;
@@ -232,8 +232,8 @@ const { color, effect } = Astro.props;
   }
   @keyframes float-ember {
     0% { transform: translateY(0) translateX(0); opacity: 0; }
-    10% { opacity: 0.55; }
-    90% { opacity: 0.2; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.35; }
     100% { transform: translateY(-90vh) translateX(2vw); opacity: 0; }
   }
 
@@ -247,7 +247,7 @@ const { color, effect } = Astro.props;
     top: -5%;
     border-radius: 50%;
     background: var(--ambient-color);
-    opacity: 0.6;
+    opacity: 0.85;
     filter: blur(0.3px);
     animation-name: snow-fall;
     animation-timing-function: linear;
@@ -255,8 +255,8 @@ const { color, effect } = Astro.props;
   }
   @keyframes snow-fall {
     0% { transform: translate(0, 0); opacity: 0; }
-    10% { opacity: 0.65; }
-    90% { opacity: 0.4; }
+    10% { opacity: 0.85; }
+    90% { opacity: 0.55; }
     100% { transform: translate(var(--drift, 0), 115vh); opacity: 0; }
   }
 
@@ -270,6 +270,6 @@ const { color, effect } = Astro.props;
   }
 
   @media (max-width: 640px) {
-    .ambient-layer { opacity: 0.35; }
+    .ambient-layer { opacity: 0.6; }
   }
 </style>
