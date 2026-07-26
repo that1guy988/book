@@ -255,7 +255,6 @@ const showKanjiSubtitle = cover.subtitle === '霧' && lang !== 'ja';
   function initCover() {
     const cover = document.getElementById('chapter-cover');
     const openBtn = document.getElementById('cover-open');
-    const reader = document.querySelector('.book-wrap-container');
 
     function markVisited() {
       try {
@@ -273,6 +272,11 @@ const showKanjiSubtitle = cover.subtitle === '霧' && lang !== 'ja';
       cover.classList.add('cover-closing');
       window.setTimeout(() => {
         cover.style.display = 'none';
+        // Busca o leitor aqui dentro, não em initCover(): a diretiva
+        // define:vars roda o script de forma síncrona no momento em que essa
+        // tag é lida pelo navegador — e a .book-wrap-container vem DEPOIS da
+        // capa no HTML, então ainda não existiria no DOM se buscássemos lá em cima.
+        const reader = document.querySelector('.book-wrap-container');
         reader?.classList.add('reader-visible');
       }, 900);
     }
