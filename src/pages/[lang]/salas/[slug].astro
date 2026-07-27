@@ -2,7 +2,7 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import BookReader from '../../../components/BookReader.astro';
 import ChapterCover from '../../../components/ChapterCover.astro';
-import { languages, type Lang } from '../../../i18n/config';
+import type { Lang } from '../../../i18n/config';
 import { useTranslations } from '../../../i18n/ui';
 import { getRoomTitle, getRoomFont } from '../../../i18n/roomTitles';
 import { getCollection } from 'astro:content';
@@ -30,7 +30,7 @@ const fullTitle = slug === 'introducao' ? entry.data.title : `${entry.data.title
 
 // Divide o corpo em markdown bruto em parágrafos (separados por linha em branco),
 // removendo comentários de rascunho e normalizando espaços.
-const rawParagraphs = entry.body
+const rawParagraphs = (entry.body ?? '')
   .split(/\n\s*\n/)
   .map((p) => p.trim())
   .filter((p) => p.length > 0 && !p.startsWith('#'));
