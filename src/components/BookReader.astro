@@ -11,7 +11,7 @@ interface Props {
   themeMarkers?: ThemeMarker[]; // trocas de clima de fundo embutidas no texto
   baseAmbientColor?: string;
   baseAmbientEffect?: string;
-  pageTheme?: 'default' | 'frost' | 'watercolor' | 'mist' | 'matcha' | 'cafeteria' | 'void'; // paleta da própria página do leitor
+  pageTheme?: 'default' | 'frost' | 'watercolor' | 'mist' | 'matcha' | 'cafeteria' | 'void' | 'mediterraneo'; // paleta da própria página do leitor
   pigmentPalette?: string[]; // cores usadas nas partículas/sangramento do tema watercolor
   storageKey?: string; // identifica a sala+idioma pra lembrar a página lida
   prevLabel: string;
@@ -89,7 +89,7 @@ const {
       </div>
       <div class="page-ambient" aria-hidden="true" style={`--amb-color: ${baseAmbientColor};`}>
         {/* Introdução e Minha Sala: poeira/cinzas — o mundo comum, as memórias que se acumulam */}
-        {(pageTheme === 'default' || pageTheme === 'void') && Array.from({ length: 20 }).map((_, i) => (
+        {(pageTheme === 'default' || pageTheme === 'void' || pageTheme === 'mediterraneo') && Array.from({ length: 20 }).map((_, i) => (
           <span
             class="amb-dust-mote"
             style={`left:${(i * 43) % 100}%; top:${(i * 31) % 100}%; animation-duration:${(13 + (i % 5) * 1.6).toFixed(1)}s; animation-delay:${(-(i * 0.7)).toFixed(1)}s;`}
@@ -132,6 +132,9 @@ const {
       </div>
       <div class="page-inner"></div>
       <div class="summer-light" aria-hidden="true"></div>
+      <div class="med-light-top" aria-hidden="true"></div>
+      <div class="med-light-side" aria-hidden="true"></div>
+      <div class="med-forgotten-light" aria-hidden="true"></div>
       <div class="invisible-door" aria-hidden="true"></div>
       <div class="page-edges" aria-hidden="true"></div>
     </div>
@@ -1305,6 +1308,92 @@ const {
       animation: none !important;
     }
   }
+
+  /* ============ Tema: Mediterrâneo (a sala das medidas exatas) ============ */
+  .book-wrap[data-theme='mediterraneo'] {
+    --paper: #f7f5f0;
+    --paper-shadow: #e6ddc9;
+    --ink: #2c2725;
+    --ink-soft: #6b5f52;
+    --accent: #c86d51;
+    --accent-gold: #e2b062;
+  }
+
+  .book-wrap[data-theme='mediterraneo'] .page-inner {
+    font-family: 'Cormorant Garamond', 'Source Serif 4', serif;
+    letter-spacing: 0.008em;
+    line-height: 1.8;
+    filter: url('#ceramic-noise');
+  }
+  .book-wrap[data-theme='mediterraneo'] .page-inner p.first-para::first-letter {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+  }
+  .book-wrap[data-theme='mediterraneo'] .page-inner em {
+    color: var(--ink-soft);
+  }
+
+  /* As duas luzes do texto: uma dourada descendo do "teto", outra terracota
+     aquecendo discretamente um dos lados — encontrando-se sem disputar espaço */
+  .med-light-top,
+  .med-light-side {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    display: none;
+  }
+  .book-wrap[data-theme='mediterraneo'] .med-light-top,
+  .book-wrap[data-theme='mediterraneo'] .med-light-side {
+    display: block;
+  }
+  .med-light-top {
+    background: radial-gradient(ellipse 70% 45% at 50% 0%, rgba(226, 176, 98, 0.35) 0%, transparent 70%);
+  }
+  .med-light-side {
+    background: radial-gradient(ellipse 55% 60% at 100% 100%, rgba(200, 109, 81, 0.28) 0%, transparent 70%);
+  }
+
+  /* O discreto pisca-pisca que parecia ter esquecido de piscar — um detalhe
+     quase imperceptível, um pulsar raro e lento no canto da página */
+  .med-forgotten-light {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    right: 6%;
+    bottom: 8%;
+    background: var(--accent-gold);
+    opacity: 0.35;
+    z-index: 1;
+    animation: med-blink-forgot 14s ease-in-out infinite;
+  }
+  @keyframes med-blink-forgot {
+    0%, 92%, 100% { opacity: 0.35; box-shadow: none; }
+    95% { opacity: 0.9; box-shadow: 0 0 6px 2px var(--accent-gold); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .med-forgotten-light { animation: none; }
+  }
+
+  /* Divisor de onda — pincelada suave, antes do trecho sobre a pintura do mar */
+  .book-wrap[data-theme='mediterraneo'] .page-inner p.sea-divider-trigger {
+    position: relative;
+    margin-top: 2.2rem;
+  }
+  .book-wrap[data-theme='mediterraneo'] .page-inner p.sea-divider-trigger::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: -1.4rem;
+    left: 0;
+    width: 64px;
+    height: 14px;
+    opacity: 0.55;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 14'%3E%3Cpath d='M0 7 Q8 0 16 7 T32 7 T48 7 T64 7' fill='none' stroke='%23c86d51' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+  }
 </style>
 
 <script>
@@ -1501,6 +1590,7 @@ const {
       '{{easter-egg}} ': 'easter-egg',
       '{{mist-being}} ': 'mist-trigger',
       '{{gray-pass}} ': 'gray-pass-trigger',
+      '{{sea-divider}} ': 'sea-divider-trigger',
     };
 
     function paintPage(container: HTMLElement, pageParas: string[], isFirstPage: boolean) {

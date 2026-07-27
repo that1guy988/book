@@ -15,7 +15,7 @@ const salas = defineCollection({
     // simula papel molhado, com tinta que reage ao ponteiro e sangra na dobra.
     // 'mist' faz a página se comportar como névoa: dissolve ao virar, bordas
     // com luz pulsante, rastro residual do texto anterior.
-    readerTheme: z.enum(['default', 'frost', 'watercolor', 'mist', 'matcha', 'cafeteria', 'void']).default('default'),
+    readerTheme: z.enum(['default', 'frost', 'watercolor', 'mist', 'matcha', 'cafeteria', 'void', 'mediterraneo']).default('default'),
   }),
 });
 

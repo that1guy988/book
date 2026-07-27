@@ -30,6 +30,10 @@ export const ROOM_TITLES: Record<string, Record<string, string>> = {
     pt: 'Introdução', en: 'Introduction', es: 'Introducción', fr: 'Introduction',
     ja: '序章', zh: '序言', uk: 'Вступ', ru: 'Введение',
   },
+  medidas: {
+    pt: 'Proporções', en: 'Proportions', es: 'Proporciones', fr: 'Proportions',
+    ja: '均整', zh: '均衡', uk: 'Пропорції', ru: 'Пропорции',
+  },
 };
 
 export function getRoomTitle(slug: string, lang: string): string {
@@ -46,6 +50,7 @@ export const ROOM_FONTS: Record<string, string> = {
   cafeteria: "'Patrick Hand', cursive",
   'minha-sala': "'Fraunces', serif",
   introducao: "'Fraunces', serif",
+  medidas: "'Cormorant Garamond', serif",
 };
 
 export function getRoomFont(slug: string): string {
