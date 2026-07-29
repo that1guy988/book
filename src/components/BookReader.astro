@@ -343,7 +343,17 @@ const {
   }
 
   .book-wrap[data-theme='frost'] .page-inner {
-    filter: grayscale(20%) brightness(105%) contrast(90%) url('#ceramic-noise');
+    filter: grayscale(20%) brightness(105%) contrast(90%);
+  }
+
+  .book-wrap[data-theme='frost'] .page::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.45;
+    mix-blend-mode: multiply;
+    filter: url('#ceramic-noise');
   }
 
   .book-wrap[data-theme='frost'] .page-inner::after {
@@ -416,6 +426,14 @@ const {
   .book-wrap[data-theme='watercolor'] .page-inner {
     letter-spacing: 0.015em;
     line-height: 1.85;
+  }
+  .book-wrap[data-theme='watercolor'] .page::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    mix-blend-mode: multiply;
     filter: url('#ceramic-noise');
   }
   .book-wrap[data-theme='watercolor'] .page-inner p.first-para::first-letter {
@@ -1323,6 +1341,14 @@ const {
     font-family: 'Cormorant Garamond', 'Source Serif 4', serif;
     letter-spacing: 0.008em;
     line-height: 1.8;
+  }
+  .book-wrap[data-theme='mediterraneo'] .page::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: multiply;
     filter: url('#ceramic-noise');
   }
   .book-wrap[data-theme='mediterraneo'] .page-inner p.first-para::first-letter {
@@ -1874,22 +1900,20 @@ const {
         root.dataset.comfort = choice;
       }
       comfortBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.comfortChoice === choice));
-      try {
-        localStorage.setItem('reader-comfort', choice);
-      } catch {
-        // localStorage indisponível
-      }
     }
 
-    // aplica preferências salvas ANTES da primeira paginação, pra medir certo
+    // Tamanho de fonte é preferência de acessibilidade — essa persiste entre salas.
+    // Já o tema de conforto (sépia/escuro) NÃO fica salvo globalmente: cada sala
+    // sempre abre com o visual próprio dela por padrão; sépia/escuro valem só
+    // pra essa visita, e é sempre uma escolha ativa, não um "vazamento" de sala
+    // pra sala.
     let currentFontStep = 'md';
     try {
       currentFontStep = localStorage.getItem('reader-font-size') || 'md';
-      const savedComfort = localStorage.getItem('reader-comfort') || 'room';
-      applyComfort(savedComfort);
     } catch {
-      // localStorage indisponível — usa os padrões
+      // localStorage indisponível — usa o padrão
     }
+    applyComfort('room');
     applyFontStep(currentFontStep);
 
     fontSmallerBtn?.addEventListener('click', () => {
