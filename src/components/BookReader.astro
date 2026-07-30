@@ -266,6 +266,11 @@ const {
     font-family: 'Source Serif 4', Georgia, serif;
     font-size: var(--reader-font-size, clamp(0.95rem, 1.6vw, 1.05rem));
     line-height: 1.75;
+    /* Evita a tela em branco no Safari/iOS quando position:absolute +
+       overflow:hidden + filter coincidem — força a camada pra GPU. */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform, filter;
   }
 
   .book-wrap[data-font-size='sm'] { --reader-font-size: clamp(0.8rem, 1.3vw, 0.88rem); }
@@ -354,6 +359,8 @@ const {
     opacity: 0.45;
     mix-blend-mode: multiply;
     filter: url('#ceramic-noise');
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
 
   .book-wrap[data-theme='frost'] .page-inner::after {
@@ -435,6 +442,8 @@ const {
     opacity: 0.4;
     mix-blend-mode: multiply;
     filter: url('#ceramic-noise');
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
   .book-wrap[data-theme='watercolor'] .page-inner p.first-para::first-letter {
     font-family: 'Marck Script', cursive;
@@ -481,6 +490,8 @@ const {
 
   .book-wrap[data-theme='watercolor'] .page-inner p {
     filter: url('#ink-wobble');
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
 
   .book-wrap[data-theme='watercolor'] .leaf.turning .leaf-front {
@@ -714,6 +725,8 @@ const {
     opacity: 0.5;
     filter: url('#ceramic-noise');
     mix-blend-mode: multiply;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
 
   /* 2. Poeira de matcha: partículas suspensas que reagem à virada */
@@ -1350,6 +1363,8 @@ const {
     opacity: 0.35;
     mix-blend-mode: multiply;
     filter: url('#ceramic-noise');
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
   .book-wrap[data-theme='mediterraneo'] .page-inner p.first-para::first-letter {
     font-family: 'Cormorant Garamond', serif;
