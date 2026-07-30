@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://livro-preview.pages.dev/sitemap-index.xml
+Sitemap: https://book.that1guy988.workers.dev/sitemap-index.xml

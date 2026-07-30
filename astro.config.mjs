@@ -7,7 +7,7 @@ import sitemap from '@astrojs/sitemap';
 // troque a URL abaixo pela URL real do site (ex: https://book.SEU-SUBDOMINIO.workers.dev
 // ou seu domínio customizado) — ela é usada para gerar o sitemap.xml e as
 // tags og:image com endereço absoluto.
-const SITE_URL = 'https://livro-preview.pages.dev';
+const SITE_URL = 'https://book.that1guy988.workers.dev';
 
 export default defineConfig({
   site: SITE_URL,
